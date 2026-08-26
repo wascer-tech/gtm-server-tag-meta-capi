@@ -50,6 +50,8 @@ function createSandbox(env) {
   const api = {
     computeEffectiveTldPlusOne,
     createRegex: (pattern, flags) => new RegExp(pattern, flags),
+    decodeUriComponent: (v) => { try { return decodeURIComponent(v); } catch (e) { return v; } },
+    encodeUriComponent: (v) => encodeURIComponent(v),
     testRegex: (re, str) => {
       const fresh = new RegExp(re.source, re.flags.replace('g', ''));
       return fresh.test(makeString(str));

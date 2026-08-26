@@ -18,6 +18,7 @@ function extractJs(tpl) {
 }
 
 const fixture = (name) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8'));
+const lastPart = (v) => v.split('.').slice(3).join('.');
 const sha = (s) => crypto.createHash('sha256').update(s, 'utf8').digest('hex');
 
 const baseData = {
@@ -161,7 +162,45 @@ async function main() {
   check('evento desconhecido passa cru',
     r.captured.requests[0].body.data[0].event_name, 'algo_custom');
 
-  // ---- 10. Falha da Meta derruba a tag -----------------------------------
+  // ---- 10. Indice de subdominio e fbclid ---------------------------------
+  const semWww = Object.assign(fixture('purchase-ga4.json'),
+    { page_location: 'https://lojateste.com.br/obrigado?fbclid=CLIQUE_A' });
+  r = await run({}, { eventData: semWww });
+  check('apex .com.br continua indice 2',
+    r.captured.requests[0].body.data[0].user_data.fbc.split('.')[1], '2');
+
+  const pontoCom = Object.assign(fixture('purchase-ga4.json'),
+    { page_location: 'https://www.loja.com/obrigado?fbclid=CLIQUE_A' });
+  r = await run({}, { eventData: pontoCom });
+  check('.com da indice 1',
+    r.captured.requests[0].body.data[0].user_data.fbc.split('.')[1], '1');
+
+  // fbclid novo tem que vencer o _fbc guardado
+  r = await run({}, { eventData: pontoCom,
+    cookies: { _fbc: 'fb.1.1700000000000.CLIQUE_ANTIGO' } });
+  check('fbclid novo reescreve o fbc antigo',
+    lastPart(r.captured.requests[0].body.data[0].user_data.fbc), 'CLIQUE_A');
+
+  // mesmo fbclid nao pode reescrever, senao o creationTime anda a cada evento
+  r = await run({}, { eventData: pontoCom,
+    cookies: { _fbc: 'fb.1.1700000000000.CLIQUE_A' } });
+  check('mesmo fbclid preserva o cookie inteiro',
+    r.captured.requests[0].body.data[0].user_data.fbc, 'fb.1.1700000000000.CLIQUE_A');
+
+  // fbclid percent-encoded na URL
+  const encoded = Object.assign(fixture('purchase-ga4.json'),
+    { page_location: 'https://www.loja.com/obrigado?fbclid=IwAR%2Fabc%3Dd' });
+  r = await run({}, { eventData: encoded });
+  check('fbclid decodificado',
+    lastPart(r.captured.requests[0].body.data[0].user_data.fbc), 'IwAR/abc=d');
+
+  // fbc e fbp vindos do event data com underscore
+  r = await run({}, { eventData: Object.assign(fixture('purchase-ga4.json'),
+    { page_location: 'https://www.loja.com/obrigado', _fbp: 'fb.1.1700000000000.999' }) });
+  check('_fbp do event data', r.captured.requests[0].body.data[0].user_data.fbp,
+    'fb.1.1700000000000.999');
+
+  // ---- 11. Falha da Meta derruba a tag -----------------------------------
   r = await run({}, { eventData: fixture('purchase-ga4.json'),
     live: () => Promise.resolve({ statusCode: 400, headers: {}, body: '{"error":{"message":"Invalid parameter"}}' }) });
   check('resposta 400 marca falha', r.failure, true);

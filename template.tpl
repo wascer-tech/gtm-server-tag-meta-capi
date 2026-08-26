@@ -741,6 +741,7 @@ ___SANDBOXED_JS_FOR_SERVER___
 
 const computeEffectiveTldPlusOne = require('computeEffectiveTldPlusOne');
 const createRegex = require('createRegex');
+const decodeUriComponent = require('decodeUriComponent');
 const generateRandom = require('generateRandom');
 const getAllEventData = require('getAllEventData');
 const getCookieValues = require('getCookieValues');
@@ -863,13 +864,18 @@ function resolveClickAndBrowserIds() {
     fbc = firstCookie('_fbc');
     fbp = firstCookie('_fbp');
   }
-  if (!fbc && eventData.fbc) fbc = makeString(eventData.fbc);
-  if (!fbp && eventData.fbp) fbp = makeString(eventData.fbp);
+  if (!fbc) fbc = makeString(eventData._fbc || eventData.fbc || '');
+  if (!fbp) fbp = makeString(eventData._fbp || eventData.fbp || '');
 
-  if (!fbc && data.buildFbcFromUrl) {
-    const fbclid = getUrlParam('fbclid');
-    if (fbclid) {
-      fbc = 'fb.' + getSubdomainIndex() + '.' + makeString(getTimestampMillis()) + '.' + fbclid;
+  // Um fbclid novo na URL vence o _fbc guardado: quem voltou por um anuncio
+  // diferente tem que ser atribuido ao clique novo, nao ao antigo.
+  if (data.buildFbcFromUrl) {
+    const raw = getUrlParam('fbclid');
+    if (raw) {
+      const fbclid = decodeUriComponent(raw);
+      if (!fbc || lastSegment(fbc) !== fbclid) {
+        fbc = 'fb.' + getSubdomainIndex() + '.' + makeString(getTimestampMillis()) + '.' + fbclid;
+      }
     }
   }
   if (!fbp && data.generateFbp) {
@@ -899,18 +905,24 @@ function getUrlParam(name) {
   return value ? makeString(value) : '';
 }
 
-// Indice de subdominio do _fbc: 0 para o dominio nu, 1 para loja.com, 2 para www.loja.com.
+// Indice de subdominio do _fbc e do _fbp. A Meta conta o nivel do dominio em
+// que o cookie vive: com = 0, example.com = 1, www.example.com = 2. Como a tag
+// grava com domain auto, o cookie vive no dominio registravel, entao o indice e
+// a quantidade de rotulos dele menos um. Isso da 1 para example.com e 2 para
+// example.com.br, que e o ponto onde contar os rotulos do host se engana.
 function getSubdomainIndex() {
   const url = getPageUrl();
   if (!url) return 1;
   const parsed = parseUrl(url);
   if (!parsed || !parsed.hostname) return 1;
-  const host = parsed.hostname;
-  const etldPlusOne = computeEffectiveTldPlusOne(host);
+  const etldPlusOne = computeEffectiveTldPlusOne(parsed.hostname);
   if (!etldPlusOne) return 1;
-  const hostParts = host.split('.').length;
-  const baseParts = etldPlusOne.split('.').length;
-  return hostParts - baseParts + 1;
+  return etldPlusOne.split('.').length - 1;
+}
+
+function lastSegment(value) {
+  const parts = value.split('.');
+  return parts[parts.length - 1];
 }
 
 function writeIdCookies(ids) {
@@ -1668,6 +1680,8 @@ do container.
 Pendente antes de publicar na galeria:
   - preencher o bloco ___TESTS___, que e o que o proprio Tag Manager roda
   - conferir a normalizacao de fn e ln com acento contra a doc da Meta
+  - Event Type cobre os 17 eventos padrao da Meta mais PageView, lista conferida
+    contra a referencia do Meta Pixel
   - rodar contra um dataset real com test_event_code
   - permissoes de cookie e de header ja declaradas conforme o uso atual
 
