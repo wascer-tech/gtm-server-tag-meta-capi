@@ -6,11 +6,16 @@ ___INFO___
   "version": 1,
   "displayName": "Wascer Meta CAPI",
   "brand": {
-    "id": "github.com_wascer-tech",
+    "id": "brand_wascer",
     "displayName": "Wascer",
     "thumbnail": "data:image/png;base64,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"
   },
   "description": "Send server events to the Meta Conversions API from your server container.",
+  "categories": [
+    "ADVERTISING",
+    "CONVERSIONS",
+    "ANALYTICS"
+  ],
   "containerContexts": [
     "SERVER"
   ],
@@ -1901,7 +1906,348 @@ ___SERVER_PERMISSIONS___
 
 ___TESTS___
 
-scenarios: []
+scenarios:
+- name: Sends a complete payload to the Conversions API
+  code: |-
+    mockEvent(baseEventData());
+
+    let capturedUrl, capturedOptions, capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedUrl = url;
+      capturedOptions = options;
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{"events_received":1}'});
+    });
+
+    runCode(mockData({}));
+
+    assertThat(capturedUrl.indexOf(
+      'https://graph.facebook.com/v26.0/111122223333444/events?access_token=') === 0).isTrue();
+    assertThat(capturedOptions.method).isEqualTo('POST');
+    assertThat(capturedBody.data.length).isEqualTo(1);
+
+    const event = capturedBody.data[0];
+    assertThat(event.event_name).isEqualTo('Purchase');
+    assertThat(event.event_id).isEqualTo('PED-90210');
+    assertThat(event.event_time).isEqualTo(1756231200);
+    assertThat(event.action_source).isEqualTo('website');
+    assertThat(event.event_source_url).isEqualTo('https://www.lojateste.com.br/obrigado');
+    assertThat(event.custom_data.value).isEqualTo(249.9);
+    assertThat(event.custom_data.currency).isEqualTo('BRL');
+    assertThat(event.custom_data.order_id).isEqualTo('PED-90210');
+    assertThat(event.custom_data.content_type).isEqualTo('product');
+    assertThat(event.custom_data.content_ids).isEqualTo(['SKU-1', 'SKU-2']);
+    assertThat(event.custom_data.num_items).isEqualTo(3);
+    assertThat(event.custom_data.contents[0].id).isEqualTo('SKU-1');
+    assertThat(event.custom_data.contents[0].quantity).isEqualTo(2);
+    assertThat(event.custom_data.contents[0].item_price).isEqualTo(79.9);
+- name: Each field is normalized its own way before hashing
+  code: |-
+    mockEvent(baseEventData());
+
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    runCode(mockData({}));
+    const user = capturedBody.data[0].user_data;
+
+    // Email: trimmed and lowercased.
+    assertThat(user.em)
+      .isEqualTo('a72badd7bb3fa438d2cb290471dae4ae9c80da96351cc328787468946ade2a88');
+    // Phone: digits only, no plus and no punctuation.
+    assertThat(user.ph)
+      .isEqualTo('029c7290f14c4516673508635f0519db95f7daf42057fd0e4ad1de84c5408a66');
+    // First name: lowercased, and the accent stays.
+    assertThat(user.fn)
+      .isEqualTo('d147147c3dcbe0ac2756b42297dd7f013f8b2fa6178e209c3f74dc7d752243ef');
+    // City: no space and no accent.
+    assertThat(user.ct)
+      .isEqualTo('4a287883aa51936209f313e4c62d9b38b41b7df896dfdff33b98dc1a86607668');
+    // Zip: no dash.
+    assertThat(user.zp)
+      .isEqualTo('9a4a139dfbfcd2fc89a3cb4302dad65a35abd8d29a56c09a962b69c5cf3bca40');
+    // Country: two letters.
+    assertThat(user.country)
+      .isEqualTo('885036a0da3dff3c3e05bc79bf49382b12bc5098514ed57ce0875aba1aa2c40d');
+
+    // IP and user agent are sent as they are. Hashing them breaks the match.
+    assertThat(user.client_ip_address).isEqualTo('187.1.2.3');
+    assertThat(user.client_user_agent).isEqualTo('Mozilla/5.0 Teste');
+- name: A value that already arrives hashed is passed through untouched
+  code: |-
+    const hashed = 'a72badd7bb3fa438d2cb290471dae4ae9c80da96351cc328787468946ade2a88';
+    mockEvent({event_name: 'purchase', user_data: {email_address: hashed}});
+
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    runCode(mockData({}));
+
+    assertThat(capturedBody.data[0].user_data.em).isEqualTo(hashed);
+- name: Builds the click ID from fbclid, with the subdomain index the domain asks for
+  code: |-
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    // A two label suffix has one more level, so the index is 2 and not 1.
+    // Getting this wrong is invisible until a Brazilian store stops matching.
+    mockEvent(baseEventData({
+      page_location: 'https://www.lojateste.com.br/obrigado?fbclid=CLIQUE_A'
+    }));
+    runCode(mockData({}));
+    let fbc = capturedBody.data[0].user_data.fbc;
+    assertThat(fbc.indexOf('fb.2.') === 0).isTrue();
+    assertThat(fbc.indexOf('CLIQUE_A') > 0).isTrue();
+
+    mockEvent(baseEventData({page_location: 'https://www.loja.com/obrigado?fbclid=CLIQUE_A'}));
+    runCode(mockData({}));
+    fbc = capturedBody.data[0].user_data.fbc;
+    assertThat(fbc.indexOf('fb.1.') === 0).isTrue();
+- name: The same fbclid does not rewrite the stored cookie
+  code: |-
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+    mockEvent(baseEventData({page_location: 'https://www.loja.com/obrigado?fbclid=CLIQUE_A'}));
+
+    // Same click: the cookie is kept whole, otherwise its creation time would
+    // move forward on every event.
+    mock('getCookieValues', (name) => name === '_fbc' ? ['fb.1.1700000000000.CLIQUE_A'] : []);
+    runCode(mockData({}));
+    assertThat(capturedBody.data[0].user_data.fbc).isEqualTo('fb.1.1700000000000.CLIQUE_A');
+
+    // A different click wins: whoever came back through another ad has to be
+    // attributed to the new one.
+    mock('getCookieValues', (name) => name === '_fbc' ? ['fb.1.1700000000000.CLIQUE_ANTIGO'] : []);
+    runCode(mockData({}));
+    const fbc = capturedBody.data[0].user_data.fbc;
+    assertThat(fbc.indexOf('CLIQUE_A') > 0).isTrue();
+    assertThat(fbc.indexOf('CLIQUE_ANTIGO') === -1).isTrue();
+- name: Remembers the hashed identifiers and matches a page view that carries none
+  code: |-
+    const toBase64 = require('toBase64');
+    const fromBase64 = require('fromBase64');
+    const email = 'a72badd7bb3fa438d2cb290471dae4ae9c80da96351cc328787468946ade2a88';
+
+    let capturedBody, capturedCookie;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+    mock('setCookie', (name, value, options, noEncode) => {
+      if (name === '_gtmeec') capturedCookie = {value: value, options: options, noEncode: noEncode};
+    });
+
+    // Checkout identifies the person and the cookie keeps it.
+    mockEvent(baseEventData());
+    runCode(mockData({enableEventEnhancement: true}));
+
+    const stored = JSON.parse(fromBase64(capturedCookie.value));
+    assertThat(stored.em).isEqualTo(email);
+    assertThat(capturedCookie.options.httpOnly).isTrue();
+    assertThat(capturedCookie.options.sameSite).isEqualTo('Strict');
+
+    // Meta's own template reads this cookie without decoding it, so it has to
+    // be written raw. That is what the fourth argument of setCookie says.
+    assertThat(capturedCookie.noEncode).isTrue();
+
+    // The page view after checkout carries no user data of its own.
+    mockEvent({event_name: 'page_view', page_location: 'https://www.loja.com/produto'});
+    mock('getCookieValues', (name) =>
+      name === '_gtmeec' ? [toBase64(JSON.stringify({em: email}))] : []);
+    runCode(mockData({enableEventEnhancement: true}));
+
+    assertThat(capturedBody.data[0].user_data.em).isEqualTo(email);
+
+    // Turned off, it neither reads nor writes.
+    capturedCookie = undefined;
+    runCode(mockData({enableEventEnhancement: false}));
+    assertThat(capturedBody.data[0].user_data.em).isUndefined();
+    assertThat(capturedCookie).isUndefined();
+- name: The Event ID keeps its spaces unless trimming is asked for
+  code: |-
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+    mockEvent(baseEventData({transaction_id: ' PED-1 '}));
+
+    // Trimming on the server while the browser still sends the untrimmed
+    // string is what breaks a pair that used to deduplicate fine.
+    runCode(mockData({}));
+    assertThat(capturedBody.data[0].event_id).isEqualTo(' PED-1 ');
+
+    runCode(mockData({trimEventId: true}));
+    assertThat(capturedBody.data[0].event_id).isEqualTo('PED-1');
+- name: With consent required and ad storage denied, nothing is sent
+  code: |-
+    mockEvent(baseEventData({consent_state: {ad_storage: 'denied'}}));
+    mock('sendHttpRequest', () => fail('the event should not have been sent'));
+
+    runCode(mockData({adStorageConsent: 'required'}));
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: Sends the same event to every dataset in the table
+  code: |-
+    mockEvent(baseEventData());
+
+    const sent = [];
+    mock('sendHttpRequest', (url, options, body) => {
+      sent.push(url);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    runCode(mockData({
+      enableMultiDataset: true,
+      datasetTable: [
+        {datasetId: '111', accessToken: 'A'},
+        {datasetId: '222', accessToken: 'B'}
+      ]
+    }));
+
+    assertThat(sent.length).isEqualTo(2);
+    assertThat(sent[0].indexOf('/111/events') > 0).isTrue();
+    assertThat(sent[1].indexOf('/222/events') > 0).isTrue();
+- name: Limited Data Use and the test event code ride along when asked
+  code: |-
+    mockEvent(baseEventData());
+
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    runCode(mockData({
+      testEventCode: 'TEST123',
+      enableLDU: true,
+      lduCountry: '1',
+      lduState: '1000',
+      customerSegmentation: 'new_customer_to_business'
+    }));
+
+    assertThat(capturedBody.test_event_code).isEqualTo('TEST123');
+    const event = capturedBody.data[0];
+    assertThat(event.data_processing_options).isEqualTo(['LDU']);
+    assertThat(event.data_processing_options_country).isEqualTo(1);
+    assertThat(event.data_processing_options_state).isEqualTo(1000);
+    assertThat(event.customer_segmentation).isEqualTo('new_customer_to_business');
+
+    runCode(mockData({}));
+    assertThat(capturedBody.test_event_code).isUndefined();
+    assertThat(capturedBody.data[0].data_processing_options).isUndefined();
+- name: With no dataset configured the tag stops without breaking the container
+  code: |-
+    mockEvent(baseEventData());
+    mock('sendHttpRequest', () => fail('the event should not have been sent'));
+
+    runCode(mockData({datasetId: '', accessToken: ''}));
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+
+setup: |-
+  const JSON = require('JSON');
+  const Object = require('Object');
+
+  const baseEventData = (overrides) => {
+    const incoming = {
+      event_name: 'purchase',
+      event_time: 1756231200,
+      page_location: 'https://www.lojateste.com.br/obrigado',
+      page_referrer: 'https://www.lojateste.com.br/checkout',
+      transaction_id: 'PED-90210',
+      currency: 'BRL',
+      value: 249.9,
+      user_agent: 'Mozilla/5.0 Teste',
+      ip_override: '187.1.2.3',
+      user_data: {
+        email_address: '  JOAO@Example.COM  ',
+        phone_number: '+55 (11) 98765-4321',
+        first_name: 'João',
+        last_name: 'Silva',
+        external_id: 'cliente-4471',
+        address: {
+          city: 'São Paulo',
+          region: 'SP',
+          postal_code: '01310-100',
+          country: 'BR'
+        }
+      },
+      items: [
+        {item_id: 'SKU-1', item_name: 'Camiseta Preta', price: 79.9, quantity: 2},
+        {item_id: 'SKU-2', item_name: 'Boné', price: 90.1, quantity: 1}
+      ]
+    };
+
+    const keys = Object.keys(overrides || {});
+    for (let i = 0; i < keys.length; i++) {
+      incoming[keys[i]] = overrides[keys[i]];
+    }
+
+    return incoming;
+  };
+
+  const mockEvent = (incoming) => {
+    mock('getAllEventData', () => incoming);
+  };
+
+  const mockData = (overrides) => {
+    const settings = {
+      datasetId: '111122223333444',
+      accessToken: 'TOKEN_DE_TESTE',
+      actionSource: 'website',
+      eventType: 'standard',
+      standardEventName: 'Purchase',
+      trimEventId: false,
+      enableEventEnhancement: false,
+      autoMapUserData: true,
+      autoMapCustomData: true,
+      acceptFbPrefixes: true,
+      readFbCookies: true,
+      buildFbcFromUrl: true,
+      setFbCookies: true,
+      generateFbp: false,
+      cookieDomainSource: 'auto',
+      adStorageConsent: 'not_required',
+      enableLDU: false,
+      useOptimisticScenario: false,
+      logType: 'no'
+    };
+
+    const keys = Object.keys(overrides || {});
+    for (let i = 0; i < keys.length; i++) {
+      settings[keys[i]] = overrides[keys[i]];
+    }
+
+    return settings;
+  };
+
+  const resolvedRequest = (response) => {
+    return {
+      then: (onSuccess) => {
+        onSuccess(response);
+        return {catch: () => {}};
+      }
+    };
+  };
+
+  mock('getCookieValues', () => []);
+  mock('getRequestHeader', () => undefined);
+  mock('setCookie', () => {});
 
 
 ___NOTES___
@@ -1910,11 +2256,14 @@ Wascer Meta CAPI, tag de Conversions API para container server.
 
 Rodar os testes: node test/run.js, na raiz do repositorio. O harness em
 test/sandbox.js faz shim das APIs do sandbox para executar este arquivo fora
-do container.
+do container, e test/gtm-tests.js roda os cenarios do bloco ___TESTS___ acima,
+que e o que a revisao da galeria executa.
 
 Pendente antes de publicar na galeria:
-  - preencher o bloco ___TESTS___, que e o que o proprio Tag Manager roda
-  - conferir a normalizacao de fn e ln com acento contra a doc da Meta
+  - conferir a normalizacao de fn e ln com acento contra a doc da Meta. Hoje
+    cidade vira sopaulo, sem acento, como o normalizer dos SDKs da Meta faz, e
+    nome vira joao com acento, como a doc de user data manda. As duas regras
+    estao em documentos diferentes e a frase que resolve nao apareceu
   - Event Type cobre os 17 eventos padrao da Meta mais PageView, lista conferida
     contra a referencia do Meta Pixel. AppendValue fica de fora enquanto
     original_event_data estiver fora de escopo, para nao oferecer opcao quebrada

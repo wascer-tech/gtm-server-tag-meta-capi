@@ -72,6 +72,17 @@ function createSandbox(env) {
     getTimestampMillis: () => clock,
     getType,
     JSON: { parse: JSON.parse, stringify: JSON.stringify },
+    // O sandbox nao expoe Object direto: quem quiser tem que dar require,
+    // inclusive dentro do bloco ___TESTS___.
+    Object: {
+      keys: (o) => Object.keys(o),
+      values: (o) => Object.values(o),
+      entries: (o) => Object.entries(o),
+      freeze: (o) => Object.freeze(o),
+      delete: (o, key) => {
+        delete o[key];
+      }
+    },
     logToConsole: (...args) => { captured.logs.push(args); if (env.verbose) console.log('   [log]', ...args); },
     makeNumber: (v) => Number(v),
     makeString,
@@ -97,6 +108,12 @@ function createSandbox(env) {
         ? Buffer.from(hex, 'hex').toString('base64') : hex;
     }
   };
+
+  // O bloco ___TESTS___ troca uma API por outra com mock(). A troca entra por
+  // cima do shim, do mesmo jeito.
+  Object.keys(env.mocks || {}).forEach((name) => {
+    api[name] = env.mocks[name];
+  });
 
   return { api, captured };
 }
@@ -136,4 +153,22 @@ function flush() {
   return chain;
 }
 
-module.exports = { runTemplate, createSandbox, getType, computeEffectiveTldPlusOne, parseUrl };
+// Uma variavel (`"type": "MACRO"`) devolve valor em vez de chamar
+// gtmOnSuccess. O harness compartilhado usa esta porta.
+function runVariable(source, data, env) {
+  const { api, captured } = createSandbox(env || {});
+  const fakeRequire = (name) => {
+    if (!(name in api)) throw new Error('API nao disponivel no sandbox: ' + name);
+    return api[name];
+  };
+  return { value: new Function('require', 'data', source)(fakeRequire, Object.assign({}, data)), captured };
+}
+
+module.exports = {
+  runTemplate,
+  runVariable,
+  createSandbox,
+  getType,
+  computeEffectiveTldPlusOne,
+  parseUrl
+};

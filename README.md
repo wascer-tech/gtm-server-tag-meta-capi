@@ -8,9 +8,9 @@ Built by [Wascer](https://wascer.com) for the server containers we host, and fre
 for anyone to use.
 
 > **Status: not published yet.** The tag builds and sends a real payload, and
-> the suite in `test/` covers it. What is still missing is a run against a live
-> dataset in Events Manager, and the `___TESTS___` block that Tag Manager runs
-> on its own.
+> the suite in `test/` covers it, including the `___TESTS___` scenarios that Tag
+> Manager runs on its own. What is still missing is a run against a live dataset
+> in Events Manager.
 
 ## What the template does
 
@@ -68,9 +68,11 @@ tags does not change your numbers on its own:
 The template is sandboxed JavaScript, so it only runs inside Tag Manager. The
 suite in `test/` gets around that with a small shim of the sandbox APIs, which
 means the payload can be checked on a laptop before any container is touched.
+It also runs the `___TESTS___` scenarios written inside `template.tpl`, which are
+the ones the Gallery review executes.
 
 ```sh
-node test/run.js           # 76 checks, no network
+node test/run.js           # 87 checks, no network
 node test/run.js --print   # also prints the payload of each scenario
 ```
 

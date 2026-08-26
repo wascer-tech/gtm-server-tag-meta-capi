@@ -5,9 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { runTemplate } = require('./sandbox');
+const { runTagScenarios } = require('./gtm-tests');
 
 const ROOT = path.join(__dirname, '..');
-const SOURCE = extractJs(fs.readFileSync(path.join(ROOT, 'template.tpl'), 'utf8'));
+const TPL = fs.readFileSync(path.join(ROOT, 'template.tpl'), 'utf8');
+const SOURCE = extractJs(TPL);
 const PRINT = process.argv.includes('--print');
 
 function extractJs(tpl) {
@@ -300,6 +302,13 @@ async function main() {
   r = await run({}, { eventData: fixture('purchase-ga4.json'),
     live: () => Promise.resolve({ statusCode: 400, headers: {}, body: '{"error":{"message":"Invalid parameter"}}' }) });
   check('resposta 400 marca falha', r.failure, true);
+
+  // ---- Os cenarios do bloco ___TESTS___ ---------------------------------
+  // Esse bloco e o que a revisao da galeria roda. Aqui ele roda junto, para
+  // nao ir para a submissao sem nunca ter sido executado.
+  runTagScenarios(SOURCE, TPL).forEach((scenario) => {
+    check('___TESTS___ ' + scenario.name, scenario.ok || scenario.error, true);
+  });
 
   report();
 }
