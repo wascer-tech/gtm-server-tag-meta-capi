@@ -269,6 +269,33 @@ async function main() {
   check('desligado nao grava',
     r.captured.cookies.filter((c) => c.name === '_gtmeec').length, 0);
 
+  // ---- 12b. Interoperar com o cookie da tag oficial da Meta --------------
+  // Eles gravam com setCookie sem o quarto argumento, ou seja codificado, e leem
+  // com getCookieValues('_gtmeec', true), ou seja cru. Os dois sentidos tem que
+  // funcionar, senao o cookie compartilhado nao serve para nada.
+  const payload = b64({ em: sha('joao@example.com') });
+
+  r = await run({ enableEventEnhancement: true }, { eventData: pageView,
+    cookies: { _gtmeec: encodeURIComponent(payload) } });
+  check('lemos o cookie que a tag da Meta gravou codificado',
+    r.captured.requests[0].body.data[0].user_data.em, sha('joao@example.com'));
+
+  r = await run({ enableEventEnhancement: true }, { eventData: fixture('purchase-ga4.json') });
+  const gravado = r.captured.cookies.filter((c) => c.name === '_gtmeec')[0];
+  check('gravamos cru, que e o que a leitura sem decode deles enxerga',
+    gravado.stored, gravado.value);
+  checkTrue('e o valor cru e base64 valido',
+    /^[A-Za-z0-9+/]+={0,2}$/.test(gravado.stored));
+  check('e volta em base64 legivel',
+    JSON.parse(Buffer.from(gravado.stored, 'base64').toString('utf8')).em,
+    sha('joao@example.com'));
+
+  // e o nosso proprio round-trip continua fechando
+  r = await run({ enableEventEnhancement: true }, { eventData: pageView,
+    cookies: { _gtmeec: gravado.stored } });
+  check('round-trip com o nosso proprio cookie',
+    r.captured.requests[0].body.data[0].user_data.em, sha('joao@example.com'));
+
   // ---- 13. Falha da Meta derruba a tag -----------------------------------
   r = await run({}, { eventData: fixture('purchase-ga4.json'),
     live: () => Promise.resolve({ statusCode: 400, headers: {}, body: '{"error":{"message":"Invalid parameter"}}' }) });

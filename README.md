@@ -70,7 +70,7 @@ suite in `test/` gets around that with a small shim of the sandbox APIs, which
 means the payload can be checked on a laptop before any container is touched.
 
 ```sh
-node test/run.js           # 71 checks, no network
+node test/run.js           # 76 checks, no network
 node test/run.js --print   # also prints the payload of each scenario
 ```
 

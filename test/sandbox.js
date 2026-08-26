@@ -61,9 +61,12 @@ function createSandbox(env) {
     generateRandom: (min, max) => min + Math.floor((env.random || 0.42) * (max - min)),
     getAllEventData: () => JSON.parse(JSON.stringify(env.eventData || {})),
     getEventData: (path) => (env.eventData || {})[path],
-    getCookieValues: (name) => {
+    // Espelha o contrato do GTM: getCookieValues(name[, noDecode]) e
+    // setCookie(name, value[, options[, noEncode]]), ambos com default false.
+    getCookieValues: (name, noDecode) => {
       const v = (env.cookies || {})[name];
-      return v === undefined ? [] : [v];
+      if (v === undefined) return [];
+      return [noDecode ? v : decodeURIComponent(v)];
     },
     getRequestHeader: (name) => (env.headers || {})[name.toLowerCase()],
     getTimestampMillis: () => clock,
@@ -85,7 +88,9 @@ function createSandbox(env) {
       captured.promises.push(p);
       return p;
     },
-    setCookie: (name, value, options) => { captured.cookies.push({ name, value, options }); },
+    setCookie: (name, value, options, noEncode) => {
+      captured.cookies.push({ name, value, options, stored: noEncode ? value : encodeURIComponent(value) });
+    },
     sha256Sync: (input, options) => {
       const hex = crypto.createHash('sha256').update(input, 'utf8').digest('hex');
       return options && options.outputEncoding === 'base64'
