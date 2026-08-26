@@ -25,7 +25,8 @@ const baseData = {
   datasetId: '111122223333444',
   accessToken: 'TOKEN_DE_TESTE',
   actionSource: 'website',
-  eventNameSource: 'automatic',
+  eventType: 'standard',
+  standardEventName: 'Purchase',
   enableEventEnhancement: false,
   autoMapUserData: true,
   autoMapCustomData: true,
@@ -61,7 +62,7 @@ async function main() {
   let ev = r.captured.requests[0].body.data[0];
   if (PRINT) print('1. purchase GA4', r.captured.requests[0]);
 
-  check('nome do evento mapeado', ev.event_name, 'Purchase');
+  check('evento padrao escolhido', ev.event_name, 'Purchase');
   check('event_id vem do transaction_id', ev.event_id, 'PED-90210');
   check('action_source', ev.action_source, 'website');
   check('event_time preservado', ev.event_time, 1756231200);
@@ -160,8 +161,6 @@ async function main() {
   // ---- 9. test_event_code e evento nao mapeado ---------------------------
   r = await run({ testEventCode: 'TEST123' }, { eventData: { event_name: 'algo_custom' } });
   check('test_event_code no corpo', r.captured.requests[0].body.test_event_code, 'TEST123');
-  check('evento desconhecido passa cru',
-    r.captured.requests[0].body.data[0].event_name, 'algo_custom');
 
   // ---- 10. Indice de subdominio e fbclid ---------------------------------
   const semWww = Object.assign(fixture('purchase-ga4.json'),
@@ -201,14 +200,13 @@ async function main() {
   check('_fbp do event data', r.captured.requests[0].body.data[0].user_data.fbp,
     'fb.1.1700000000000.999');
 
-  // ---- 11. Event Type manual --------------------------------------------
-  r = await run({ eventNameSource: 'override', eventType: 'standard', standardEventName: 'Lead' },
+  // ---- 11. Event Type ----------------------------------------------------
+  r = await run({ eventType: 'standard', standardEventName: 'Lead' },
     { eventData: fixture('purchase-ga4.json') });
-  check('standard escolhido a mao vence o mapa',
-    r.captured.requests[0].body.data[0].event_name, 'Lead');
-  r = await run({ eventNameSource: 'override', eventType: 'custom', customEventName: 'MeuEvento' },
+  check('standard do select', r.captured.requests[0].body.data[0].event_name, 'Lead');
+  r = await run({ eventType: 'custom', customEventName: 'MeuEvento' },
     { eventData: fixture('purchase-ga4.json') });
-  check('evento customizado', r.captured.requests[0].body.data[0].event_name, 'MeuEvento');
+  check('custom digitado', r.captured.requests[0].body.data[0].event_name, 'MeuEvento');
 
   // ---- 12. Event Enhancement, o cookie _gtmeec ---------------------------
   const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf8').toString('base64');

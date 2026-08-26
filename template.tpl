@@ -148,139 +148,111 @@ ___TEMPLATE_PARAMETERS___
     "groupStyle": "ZIPPY_OPEN",
     "subParams": [
       {
-        "type": "SELECT",
-        "name": "eventNameSource",
-        "displayName": "Event Name Setup Method",
-        "selectItems": [
-          {
-            "value": "automatic",
-            "displayValue": "Map from the incoming event"
-          },
-          {
-            "value": "override",
-            "displayValue": "Set it here"
-          }
-        ],
+        "type": "RADIO",
+        "name": "eventType",
+        "displayName": "Event Type",
         "simpleValueType": true,
-        "macrosInSelect": true,
-        "defaultValue": "automatic",
-        "help": "Mapping turns GA4 ecommerce names into Meta standard names. purchase becomes Purchase, view_item becomes ViewContent, and so on. Anything it does not recognize is passed through unchanged.",
-        "subParams": [
+        "defaultValue": "standard",
+        "radioItems": [
           {
-            "type": "RADIO",
-            "name": "eventType",
-            "displayName": "Event Type",
-            "simpleValueType": true,
-            "defaultValue": "standard",
-            "enablingConditions": [
+            "value": "standard",
+            "displayValue": "Standard",
+            "subParams": [
               {
-                "paramName": "eventNameSource",
-                "paramValue": "override",
-                "type": "EQUALS"
-              }
-            ],
-            "radioItems": [
-              {
-                "value": "standard",
-                "displayValue": "Standard",
-                "subParams": [
+                "type": "SELECT",
+                "name": "standardEventName",
+                "macrosInSelect": true,
+                "simpleValueType": true,
+                "defaultValue": "Purchase",
+                "selectItems": [
                   {
-                    "type": "SELECT",
-                    "name": "standardEventName",
-                    "macrosInSelect": true,
-                    "simpleValueType": true,
-                    "defaultValue": "Purchase",
-                    "selectItems": [
-                      {
-                        "value": "AddPaymentInfo",
-                        "displayValue": "AddPaymentInfo"
-                      },
-                      {
-                        "value": "AddToCart",
-                        "displayValue": "AddToCart"
-                      },
-                      {
-                        "value": "AddToWishlist",
-                        "displayValue": "AddToWishlist"
-                      },
-                      {
-                        "value": "CompleteRegistration",
-                        "displayValue": "CompleteRegistration"
-                      },
-                      {
-                        "value": "Contact",
-                        "displayValue": "Contact"
-                      },
-                      {
-                        "value": "CustomizeProduct",
-                        "displayValue": "CustomizeProduct"
-                      },
-                      {
-                        "value": "Donate",
-                        "displayValue": "Donate"
-                      },
-                      {
-                        "value": "FindLocation",
-                        "displayValue": "FindLocation"
-                      },
-                      {
-                        "value": "InitiateCheckout",
-                        "displayValue": "InitiateCheckout"
-                      },
-                      {
-                        "value": "Lead",
-                        "displayValue": "Lead"
-                      },
-                      {
-                        "value": "PageView",
-                        "displayValue": "PageView"
-                      },
-                      {
-                        "value": "Purchase",
-                        "displayValue": "Purchase"
-                      },
-                      {
-                        "value": "Schedule",
-                        "displayValue": "Schedule"
-                      },
-                      {
-                        "value": "Search",
-                        "displayValue": "Search"
-                      },
-                      {
-                        "value": "StartTrial",
-                        "displayValue": "StartTrial"
-                      },
-                      {
-                        "value": "SubmitApplication",
-                        "displayValue": "SubmitApplication"
-                      },
-                      {
-                        "value": "Subscribe",
-                        "displayValue": "Subscribe"
-                      },
-                      {
-                        "value": "ViewContent",
-                        "displayValue": "ViewContent"
-                      }
-                    ]
+                    "value": "AddPaymentInfo",
+                    "displayValue": "AddPaymentInfo"
+                  },
+                  {
+                    "value": "AddToCart",
+                    "displayValue": "AddToCart"
+                  },
+                  {
+                    "value": "AddToWishlist",
+                    "displayValue": "AddToWishlist"
+                  },
+                  {
+                    "value": "CompleteRegistration",
+                    "displayValue": "CompleteRegistration"
+                  },
+                  {
+                    "value": "Contact",
+                    "displayValue": "Contact"
+                  },
+                  {
+                    "value": "CustomizeProduct",
+                    "displayValue": "CustomizeProduct"
+                  },
+                  {
+                    "value": "Donate",
+                    "displayValue": "Donate"
+                  },
+                  {
+                    "value": "FindLocation",
+                    "displayValue": "FindLocation"
+                  },
+                  {
+                    "value": "InitiateCheckout",
+                    "displayValue": "InitiateCheckout"
+                  },
+                  {
+                    "value": "Lead",
+                    "displayValue": "Lead"
+                  },
+                  {
+                    "value": "PageView",
+                    "displayValue": "PageView"
+                  },
+                  {
+                    "value": "Purchase",
+                    "displayValue": "Purchase"
+                  },
+                  {
+                    "value": "Schedule",
+                    "displayValue": "Schedule"
+                  },
+                  {
+                    "value": "Search",
+                    "displayValue": "Search"
+                  },
+                  {
+                    "value": "StartTrial",
+                    "displayValue": "StartTrial"
+                  },
+                  {
+                    "value": "SubmitApplication",
+                    "displayValue": "SubmitApplication"
+                  },
+                  {
+                    "value": "Subscribe",
+                    "displayValue": "Subscribe"
+                  },
+                  {
+                    "value": "ViewContent",
+                    "displayValue": "ViewContent"
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "value": "custom",
+            "displayValue": "Custom",
+            "subParams": [
               {
-                "value": "custom",
-                "displayValue": "Custom",
-                "subParams": [
+                "type": "TEXT",
+                "name": "customEventName",
+                "simpleValueType": true,
+                "valueHint": "SubscribeNewsletter",
+                "valueValidators": [
                   {
-                    "type": "TEXT",
-                    "name": "customEventName",
-                    "simpleValueType": true,
-                    "valueHint": "SubscribeNewsletter",
-                    "valueValidators": [
-                      {
-                        "type": "NON_EMPTY"
-                      }
-                    ]
+                    "type": "NON_EMPTY"
                   }
                 ]
               }
@@ -701,13 +673,6 @@ ___TEMPLATE_PARAMETERS___
     "subParams": [
       {
         "type": "CHECKBOX",
-        "name": "mapViewItemListToViewContent",
-        "checkboxText": "Treat view_item_list as ViewContent",
-        "simpleValueType": true,
-        "defaultValue": false
-      },
-      {
-        "type": "CHECKBOX",
         "name": "useOptimisticScenario",
         "checkboxText": "Answer before Meta confirms",
         "simpleValueType": true,
@@ -798,26 +763,6 @@ const RAW_KEYS = ['client_ip_address', 'client_user_agent', 'fbc', 'fbp', 'subsc
 const ENHANCEMENT_KEYS = ['em', 'ph', 'fn', 'ln', 'db', 'ge', 'ct', 'st', 'zp',
   'country', 'external_id', 'fb_login_id'];
 
-const EVENT_MAP = {
-  page_view: 'PageView',
-  view_item: 'ViewContent',
-  add_to_cart: 'AddToCart',
-  add_to_wishlist: 'AddToWishlist',
-  begin_checkout: 'InitiateCheckout',
-  add_payment_info: 'AddPaymentInfo',
-  purchase: 'Purchase',
-  generate_lead: 'Lead',
-  sign_up: 'CompleteRegistration',
-  search: 'Search',
-  subscribe: 'Subscribe',
-  start_trial: 'StartTrial',
-  contact: 'Contact',
-  schedule: 'Schedule',
-  donate: 'Donate',
-  find_location: 'FindLocation',
-  customize_product: 'CustomizeProduct',
-  submit_application: 'SubmitApplication'
-};
 
 if (shouldExitEarly()) {
   return data.gtmOnSuccess();
@@ -998,15 +943,7 @@ function buildPayload(ids) {
 }
 
 function resolveEventName() {
-  if (data.eventNameSource === 'override') {
-    return data.eventType === 'custom' ? data.customEventName : data.standardEventName;
-  }
-
-  const incoming = makeString(eventData.event_name || '');
-  if (incoming === 'view_item_list') {
-    return data.mapViewItemListToViewContent ? 'ViewContent' : 'view_item_list';
-  }
-  return EVENT_MAP[incoming] ? EVENT_MAP[incoming] : incoming;
+  return data.eventType === 'custom' ? data.customEventName : data.standardEventName;
 }
 
 function resolveEventTime() {

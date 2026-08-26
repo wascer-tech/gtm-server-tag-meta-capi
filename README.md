@@ -15,7 +15,7 @@ for anyone to use.
 ## What the template does
 
 1. Builds a Conversions API payload from the event that reaches your server container.
-2. Turns GA4 ecommerce names into Meta standard events, and `items` into `contents`.
+2. Turns `items` into `contents` and `content_ids`.
 3. Hashes email, phone, name and address, and leaves already hashed values alone.
 4. Reads `_fbc` and `_fbp`, and rebuilds the click ID from `fbclid` when the cookie is gone.
 5. Carries the Event ID through, so the browser pixel and this tag are not counted twice.
@@ -35,14 +35,14 @@ for anyone to use.
 | Group | What it decides |
 |---|---|
 | Connection | Dataset ID and access token, one or several, plus Action Source and Test Event Code. |
-| Event | How the event name is worked out, and the Event ID used for deduplication. |
+| Event | Standard event from the list, or a custom name, and the Event ID used for deduplication. |
 | User Data | What Meta matches the event against. Automatic mapping, an object, or a table, plus remembering identifiers between events. |
 | Custom Data | Value, currency, order and products. Automatic mapping, an object, or a table. |
 | Customer Segmentation | Whether this person is new to the business or already a customer. |
 | Cookies | Reading and writing `_fbc` and `_fbp`, and the cookie domain. |
 | Compatibility | Also read the `x-fb-` prefixed parameters that Meta's own template expects. |
 | Consent | Whether ad storage consent gates the event, and Limited Data Use. |
-| More Settings | Graph API version, optimistic answer, `view_item_list` handling. |
+| More Settings | Graph API version and optimistic answer. |
 | Logs Settings | What the tag writes to the container console. |
 
 ## Moving from another Conversions API tag
@@ -70,7 +70,7 @@ suite in `test/` gets around that with a small shim of the sandbox APIs, which
 means the payload can be checked on a laptop before any container is touched.
 
 ```sh
-node test/run.js           # 68 checks, no network
+node test/run.js           # 67 checks, no network
 node test/run.js --print   # also prints the payload of each scenario
 ```
 
