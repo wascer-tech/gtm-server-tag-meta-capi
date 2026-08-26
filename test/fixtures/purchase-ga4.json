@@ -1,0 +1,26 @@
+{
+  "event_name": "purchase",
+  "event_time": 1756231200,
+  "page_location": "https://www.lojateste.com.br/checkout/obrigado?fbclid=IwAR_teste_123",
+  "page_referrer": "https://www.lojateste.com.br/checkout",
+  "transaction_id": "PED-90210",
+  "currency": "BRL",
+  "value": 249.9,
+  "user_data": {
+    "email_address": "  JOAO@Example.COM  ",
+    "phone_number": "+55 (11) 98765-4321",
+    "first_name": "João",
+    "last_name": "Silva",
+    "external_id": "cliente-4471",
+    "address": {
+      "city": "São Paulo",
+      "region": "SP",
+      "postal_code": "01310-100",
+      "country": "BR"
+    }
+  },
+  "items": [
+    { "item_id": "SKU-1", "item_name": "Camiseta Preta", "item_category": "Roupas", "price": 79.9, "quantity": 2, "delivery_category": "home_delivery" },
+    { "item_id": "SKU-2", "item_name": "Boné", "price": 90.1, "quantity": 1, "delivery_category": "in_store" }
+  ]
+}

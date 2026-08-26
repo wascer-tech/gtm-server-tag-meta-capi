@@ -739,20 +739,546 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_SERVER___
 
+const computeEffectiveTldPlusOne = require('computeEffectiveTldPlusOne');
+const createRegex = require('createRegex');
+const generateRandom = require('generateRandom');
+const getAllEventData = require('getAllEventData');
+const getCookieValues = require('getCookieValues');
+const getRequestHeader = require('getRequestHeader');
+const getTimestampMillis = require('getTimestampMillis');
+const getType = require('getType');
+const JSON = require('JSON');
 const logToConsole = require('logToConsole');
+const makeNumber = require('makeNumber');
+const makeString = require('makeString');
+const Math = require('Math');
+const parseUrl = require('parseUrl');
+const Promise = require('Promise');
+const sendHttpRequest = require('sendHttpRequest');
+const setCookie = require('setCookie');
+const sha256Sync = require('sha256Sync');
+const testRegex = require('testRegex');
 
-// TODO: implementacao. Este template esta na etapa de superficie de parametros.
-// A ordem de trabalho esta em docs/meta-capi-tag-propria.html:
-//   1. tabela de conformidade a partir da doc da Meta
-//   2. payload real de evento
-//   3. bloco ___TESTS___ escrito primeiro
-//   4. este arquivo, escrito contra os testes
-//
-// Enquanto isso a tag nao envia nada. Ela existe para revisar a UI no container.
+const API_VERSION = 'v26.0';
+const COOKIE_MAX_AGE = 7776000;
 
-logToConsole('Wascer Meta CAPI: UI only, no request sent yet.');
+const eventData = getAllEventData();
 
-data.gtmOnSuccess();
+// Campos de user_data que a Meta espera hasheados.
+const HASHED_KEYS = ['em', 'ph', 'fn', 'ln', 'db', 'ge', 'ct', 'st', 'zp', 'country', 'external_id'];
+
+// Campos de user_data que vao crus. Hashear aqui quebra o match.
+const RAW_KEYS = ['client_ip_address', 'client_user_agent', 'fbc', 'fbp', 'subscription_id',
+  'fb_login_id', 'lead_id', 'anon_id', 'madid', 'page_id', 'page_scoped_user_id',
+  'ctwa_clid', 'ig_account_id', 'ig_sid'];
+
+const EVENT_MAP = {
+  page_view: 'PageView',
+  view_item: 'ViewContent',
+  add_to_cart: 'AddToCart',
+  add_to_wishlist: 'AddToWishlist',
+  begin_checkout: 'InitiateCheckout',
+  add_payment_info: 'AddPaymentInfo',
+  purchase: 'Purchase',
+  generate_lead: 'Lead',
+  sign_up: 'CompleteRegistration',
+  search: 'Search',
+  subscribe: 'Subscribe',
+  start_trial: 'StartTrial',
+  contact: 'Contact',
+  schedule: 'Schedule',
+  donate: 'Donate',
+  find_location: 'FindLocation',
+  customize_product: 'CustomizeProduct',
+  submit_application: 'SubmitApplication'
+};
+
+if (shouldExitEarly()) {
+  return data.gtmOnSuccess();
+}
+
+const ids = resolveClickAndBrowserIds();
+const payload = buildPayload(ids);
+
+log('Wascer Meta CAPI: payload', payload);
+
+if (data.setFbCookies) {
+  writeIdCookies(ids);
+}
+
+if (data.useOptimisticScenario) {
+  sendAll(payload);
+  return data.gtmOnSuccess();
+}
+
+sendAll(payload).then(data.gtmOnSuccess, data.gtmOnFailure);
+
+// ---------------------------------------------------------------- saida cedo
+
+function shouldExitEarly() {
+  if (data.adStorageConsent === 'required' && !isAdStorageGranted()) {
+    log('Wascer Meta CAPI: sem consentimento de ad_storage, evento nao enviado.');
+    return true;
+  }
+  const targets = getTargets();
+  if (targets.length === 0) {
+    log('Wascer Meta CAPI: sem dataset configurado, evento nao enviado.');
+    return true;
+  }
+  return false;
+}
+
+function isAdStorageGranted() {
+  const consent = eventData.consent_state;
+  if (getType(consent) === 'object' && consent.ad_storage !== undefined) {
+    return consent.ad_storage === 'granted' || consent.ad_storage === true;
+  }
+  // Sem sinal de consentimento no evento, trata como concedido.
+  return true;
+}
+
+function getTargets() {
+  const out = [];
+  if (data.enableMultiDataset && getType(data.datasetTable) === 'array') {
+    data.datasetTable.forEach((row) => {
+      if (row.datasetId && row.accessToken) {
+        out.push({ datasetId: makeString(row.datasetId), accessToken: makeString(row.accessToken) });
+      }
+    });
+    return out;
+  }
+  if (data.datasetId && data.accessToken) {
+    out.push({ datasetId: makeString(data.datasetId), accessToken: makeString(data.accessToken) });
+  }
+  return out;
+}
+
+// -------------------------------------------------------------- fbc e fbp
+
+function resolveClickAndBrowserIds() {
+  let fbc = '';
+  let fbp = '';
+
+  if (data.readFbCookies) {
+    fbc = firstCookie('_fbc');
+    fbp = firstCookie('_fbp');
+  }
+  if (!fbc && eventData.fbc) fbc = makeString(eventData.fbc);
+  if (!fbp && eventData.fbp) fbp = makeString(eventData.fbp);
+
+  if (!fbc && data.buildFbcFromUrl) {
+    const fbclid = getUrlParam('fbclid');
+    if (fbclid) {
+      fbc = 'fb.' + getSubdomainIndex() + '.' + makeString(getTimestampMillis()) + '.' + fbclid;
+    }
+  }
+  if (!fbp && data.generateFbp) {
+    fbp = 'fb.' + getSubdomainIndex() + '.' + makeString(getTimestampMillis()) + '.' +
+      makeString(generateRandom(1000000000, 2147483647));
+  }
+  return { fbc: fbc, fbp: fbp };
+}
+
+function firstCookie(name) {
+  const values = getCookieValues(name);
+  return getType(values) === 'array' && values.length > 0 ? makeString(values[0]) : '';
+}
+
+function getPageUrl() {
+  if (eventData.page_location) return makeString(eventData.page_location);
+  const referer = getRequestHeader('referer');
+  return referer ? makeString(referer) : '';
+}
+
+function getUrlParam(name) {
+  const url = getPageUrl();
+  if (!url) return '';
+  const parsed = parseUrl(url);
+  if (!parsed || !parsed.searchParams) return '';
+  const value = parsed.searchParams[name];
+  return value ? makeString(value) : '';
+}
+
+// Indice de subdominio do _fbc: 0 para o dominio nu, 1 para loja.com, 2 para www.loja.com.
+function getSubdomainIndex() {
+  const url = getPageUrl();
+  if (!url) return 1;
+  const parsed = parseUrl(url);
+  if (!parsed || !parsed.hostname) return 1;
+  const host = parsed.hostname;
+  const etldPlusOne = computeEffectiveTldPlusOne(host);
+  if (!etldPlusOne) return 1;
+  const hostParts = host.split('.').length;
+  const baseParts = etldPlusOne.split('.').length;
+  return hostParts - baseParts + 1;
+}
+
+function writeIdCookies(ids) {
+  const options = {
+    domain: data.cookieDomainSource === 'custom' && data.cookieDomain ? data.cookieDomain : 'auto',
+    path: '/',
+    secure: true,
+    httpOnly: !!data.useHttpOnlyCookie,
+    'max-age': COOKIE_MAX_AGE,
+    sameSite: 'Lax'
+  };
+  if (ids.fbc) setCookie('_fbc', ids.fbc, options, false);
+  if (ids.fbp) setCookie('_fbp', ids.fbp, options, false);
+}
+
+// --------------------------------------------------------------- montagem
+
+function buildPayload(ids) {
+  const event = {
+    event_name: resolveEventName(),
+    event_time: resolveEventTime(),
+    action_source: data.actionSource || 'website'
+  };
+
+  const eventId = resolveEventId();
+  if (eventId) event.event_id = eventId;
+
+  const sourceUrl = getPageUrl();
+  if (sourceUrl) event.event_source_url = sourceUrl;
+
+  const referrer = eventData.page_referrer || getRequestHeader('referer');
+  if (referrer) event.referrer_url = makeString(referrer);
+
+  if (data.customerSegmentation) event.customer_segmentation = data.customerSegmentation;
+
+  event.user_data = buildUserData(ids);
+
+  const customData = buildCustomData();
+  if (!isEmpty(customData)) event.custom_data = customData;
+
+  if (data.enableLDU) {
+    event.data_processing_options = ['LDU'];
+    event.data_processing_options_country = makeNumber(data.lduCountry || 0);
+    event.data_processing_options_state = makeNumber(data.lduState || 0);
+  }
+
+  return event;
+}
+
+function resolveEventName() {
+  if (data.eventNameSource === 'standard') return data.standardEventName;
+  if (data.eventNameSource === 'custom') return data.customEventName;
+
+  const incoming = makeString(eventData.event_name || '');
+  if (incoming === 'view_item_list') {
+    return data.mapViewItemListToViewContent ? 'ViewContent' : 'view_item_list';
+  }
+  return EVENT_MAP[incoming] ? EVENT_MAP[incoming] : incoming;
+}
+
+function resolveEventTime() {
+  if (eventData.event_time) return makeNumber(eventData.event_time);
+  return Math.round(getTimestampMillis() / 1000);
+}
+
+// A dedup da Meta compara event_name e event_id como string exata. Trim so quando
+// pedido, porque trimar de um lado so quebra um par que hoje funciona.
+function resolveEventId() {
+  let id = data.eventId ? makeString(data.eventId) : '';
+  if (!id && eventData.event_id) id = makeString(eventData.event_id);
+  if (!id && eventData.transaction_id) id = makeString(eventData.transaction_id);
+  if (id && data.trimEventId) id = id.trim();
+  return id;
+}
+
+function buildUserData(ids) {
+  const out = {};
+
+  if (data.autoMapUserData) {
+    mergeInto(out, readAutoUserData());
+  }
+  if (data.acceptFbPrefixes) {
+    mergeInto(out, readPrefixed('x-fb-ud-'));
+    mergeInto(out, readPrefixedCookies());
+  }
+  if (getType(data.userDataObject) === 'object') {
+    mergeInto(out, data.userDataObject);
+  }
+  mergeInto(out, tableToObject(data.userDataList));
+
+  if (ids.fbc && !out.fbc) out.fbc = ids.fbc;
+  if (ids.fbp && !out.fbp) out.fbp = ids.fbp;
+
+  const ip = eventData.ip_override || getRequestHeader('x-forwarded-for');
+  if (ip && !out.client_ip_address) out.client_ip_address = firstIp(makeString(ip));
+
+  const ua = eventData.user_agent || getRequestHeader('user-agent');
+  if (ua && !out.client_user_agent) out.client_user_agent = makeString(ua);
+
+  return finalizeUserData(out);
+}
+
+function readAutoUserData() {
+  const out = {};
+  const ud = getType(eventData.user_data) === 'object' ? eventData.user_data : {};
+
+  copyFirst(out, 'em', [ud.email_address, ud.email, eventData.email]);
+  copyFirst(out, 'ph', [ud.phone_number, ud.phone, eventData.phone_number]);
+  copyFirst(out, 'fn', [ud.first_name, eventData.first_name]);
+  copyFirst(out, 'ln', [ud.last_name, eventData.last_name]);
+  copyFirst(out, 'db', [ud.date_of_birth, ud.db]);
+  copyFirst(out, 'ge', [ud.gender, ud.ge]);
+  copyFirst(out, 'external_id', [ud.external_id, eventData.user_id, eventData.client_id]);
+
+  const address = getType(ud.address) === 'object' ? ud.address :
+    (getType(ud.address) === 'array' && ud.address.length > 0 ? ud.address[0] : {});
+  copyFirst(out, 'ct', [address.city, ud.city]);
+  copyFirst(out, 'st', [address.region, address.state, ud.region]);
+  copyFirst(out, 'zp', [address.postal_code, ud.postal_code]);
+  copyFirst(out, 'country', [address.country, ud.country]);
+  if (!out.fn) copyFirst(out, 'fn', [address.first_name]);
+  if (!out.ln) copyFirst(out, 'ln', [address.last_name]);
+
+  return out;
+}
+
+function readPrefixedCookies() {
+  const out = {};
+  if (eventData['x-fb-ck-fbc']) out.fbc = makeString(eventData['x-fb-ck-fbc']);
+  if (eventData['x-fb-ck-fbp']) out.fbp = makeString(eventData['x-fb-ck-fbp']);
+  return out;
+}
+
+function readPrefixed(prefix) {
+  const out = {};
+  for (let key in eventData) {
+    if (key.indexOf(prefix) === 0) {
+      const short = key.substring(prefix.length);
+      if (isUsable(eventData[key])) out[short] = eventData[key];
+    }
+  }
+  return out;
+}
+
+function finalizeUserData(raw) {
+  const out = {};
+  for (let key in raw) {
+    const value = raw[key];
+    if (!isUsable(value)) continue;
+
+    if (indexOf(RAW_KEYS, key) !== -1) {
+      out[key] = makeString(value);
+      continue;
+    }
+    if (indexOf(HASHED_KEYS, key) === -1) {
+      out[key] = value;
+      continue;
+    }
+    if (getType(value) === 'array') {
+      const hashedList = [];
+      value.forEach((item) => {
+        const one = hashField(key, item);
+        if (one) hashedList.push(one);
+      });
+      if (hashedList.length > 0) out[key] = hashedList;
+      continue;
+    }
+    const hashed = hashField(key, value);
+    if (hashed) out[key] = hashed;
+  }
+  return out;
+}
+
+function hashField(key, value) {
+  const asString = makeString(value);
+  if (isAlreadyHashed(asString)) return asString;
+  const normalized = normalize(key, asString);
+  return normalized ? sha256Sync(normalized, { outputEncoding: 'hex' }) : '';
+}
+
+function isAlreadyHashed(value) {
+  return testRegex(createRegex('^[a-f0-9]{64}$', 'i'), value);
+}
+
+function normalize(key, value) {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return '';
+
+  if (key === 'ph') return digitsOnly(trimmed);
+  if (key === 'db') return digitsOnly(trimmed);
+  if (key === 'zp') return digitsOnly(trimmed).length > 0 ?
+    stripSeparators(trimmed) : stripSeparators(trimmed);
+  if (key === 'ct') return lettersAndDigits(trimmed);
+  if (key === 'st') return lettersAndDigits(trimmed);
+  if (key === 'country') return trimmed.substring(0, 2);
+  if (key === 'ge') {
+    const first = trimmed.substring(0, 1);
+    return first === 'f' || first === 'm' ? first : '';
+  }
+  return trimmed;
+}
+
+function digitsOnly(value) {
+  return value.replace(createRegex('[^0-9]', 'g'), '');
+}
+
+function stripSeparators(value) {
+  return value.replace(createRegex('[\\s-]', 'g'), '');
+}
+
+function lettersAndDigits(value) {
+  return value.replace(createRegex('[^a-z0-9]', 'g'), '');
+}
+
+function firstIp(value) {
+  return value.split(',')[0].trim();
+}
+
+function buildCustomData() {
+  const out = {};
+
+  if (data.autoMapCustomData) {
+    mergeInto(out, readAutoCustomData());
+  }
+  if (data.acceptFbPrefixes) {
+    mergeInto(out, readPrefixed('x-fb-cd-'));
+  }
+  if (getType(data.customDataObject) === 'object') {
+    mergeInto(out, data.customDataObject);
+  }
+  mergeInto(out, tableToObject(data.customDataList));
+
+  return out;
+}
+
+function readAutoCustomData() {
+  const out = {};
+  const ecommerce = getType(eventData.ecommerce) === 'object' ? eventData.ecommerce : {};
+
+  copyFirst(out, 'value', [eventData.value, ecommerce.value]);
+  copyFirst(out, 'currency', [eventData.currency, ecommerce.currency]);
+  copyFirst(out, 'order_id', [eventData.transaction_id, ecommerce.transaction_id]);
+  copyFirst(out, 'search_string', [eventData.search_term]);
+
+  const items = getType(eventData.items) === 'array' ? eventData.items :
+    (getType(ecommerce.items) === 'array' ? ecommerce.items : []);
+
+  if (items.length > 0) {
+    const contents = [];
+    const contentIds = [];
+    let totalItems = 0;
+
+    items.forEach((item) => {
+      const id = makeString(item[data.mapItemIdFrom] || item.item_id || item.id || '');
+      if (!id) return;
+      const quantity = item.quantity ? makeNumber(item.quantity) : 1;
+      const entry = { id: id, quantity: quantity };
+      if (item.price !== undefined) entry.item_price = makeNumber(item.price);
+      if (data.mapDeliveryCategory && item.delivery_category) {
+        entry.delivery_category = makeString(item.delivery_category);
+      }
+      contents.push(entry);
+      contentIds.push(id);
+      totalItems = totalItems + quantity;
+    });
+
+    if (contents.length > 0) {
+      out.contents = contents;
+      out.content_ids = contentIds;
+      out.content_type = 'product';
+      out.num_items = totalItems;
+      if (items[0].item_name && !out.content_name) out.content_name = makeString(items[0].item_name);
+      if (items[0].item_category && !out.content_category) {
+        out.content_category = makeString(items[0].item_category);
+      }
+    }
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ envio
+
+function sendAll(event) {
+  const targets = getTargets();
+  const version = data.apiVersionOverride ? data.apiVersionOverride : API_VERSION;
+
+  const requests = targets.map((target) => {
+    const url = 'https://graph.facebook.com/' + version + '/' + target.datasetId +
+      '/events?access_token=' + target.accessToken;
+
+    const body = { data: [event] };
+    if (data.testEventCode) body.test_event_code = data.testEventCode;
+
+    return sendHttpRequest(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' }
+    }, JSON.stringify(body)).then((result) => {
+      if (result.statusCode >= 200 && result.statusCode < 300) {
+        log('Wascer Meta CAPI: dataset ' + target.datasetId + ' aceitou o evento.', result.body);
+        return true;
+      }
+      log('Wascer Meta CAPI: dataset ' + target.datasetId + ' recusou.', result.statusCode, result.body);
+      return false;
+    });
+  });
+
+  return Promise.all(requests).then((results) => {
+    const accepted = results.filter((ok) => ok).length;
+    if (accepted === 0) return Promise.create((resolve, reject) => reject('nenhum dataset aceitou'));
+    return accepted;
+  });
+}
+
+// ------------------------------------------------------------------ apoio
+
+function tableToObject(rows) {
+  const out = {};
+  if (getType(rows) !== 'array') return out;
+  rows.forEach((row) => {
+    if (row.name && isUsable(row.value)) out[row.name] = row.value;
+  });
+  return out;
+}
+
+function mergeInto(target, source) {
+  if (getType(source) !== 'object') return;
+  for (let key in source) {
+    if (isUsable(source[key])) target[key] = source[key];
+  }
+}
+
+function copyFirst(target, key, candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    if (isUsable(candidates[i])) {
+      target[key] = candidates[i];
+      return;
+    }
+  }
+}
+
+function isUsable(value) {
+  if (value === undefined || value === null || value === '') return false;
+  if (getType(value) === 'array' && value.length === 0) return false;
+  if (getType(value) === 'object' && isEmpty(value)) return false;
+  return true;
+}
+
+function isEmpty(obj) {
+  for (let key in obj) {
+    return false;
+  }
+  return true;
+}
+
+function indexOf(list, value) {
+  for (let i = 0; i < list.length; i++) {
+    if (list[i] === value) return i;
+  }
+  return -1;
+}
+
+function log(a, b, c) {
+  if (data.logType === 'no') return;
+  if (data.logType === 'debug' && !eventData.debug_mode && !getRequestHeader('x-gtm-server-preview')) return;
+  if (c !== undefined) logToConsole(a, b, c);
+  else if (b !== undefined) logToConsole(a, b);
+  else logToConsole(a);
+}
 
 
 ___SERVER_PERMISSIONS___
@@ -867,6 +1393,262 @@ ___SERVER_PERMISSIONS___
       "isEditedByUser": true
     },
     "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "get_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "cookieAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "cookieNames",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "_fbc"
+              },
+              {
+                "type": 1,
+                "string": "_fbp"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "set_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "allowedCookies",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "_fbc"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "_fbp"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "read_request",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "headerAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "headersAllowed",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "user-agent"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "referer"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "x-forwarded-for"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "x-gtm-server-preview"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "key": "queryParameterAccess",
+          "value": {
+            "type": 1,
+            "string": "none"
+          }
+        },
+        {
+          "key": "requestAccess",
+          "value": {
+            "type": 1,
+            "string": "none"
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
   }
 ]
 
@@ -879,10 +1661,14 @@ ___NOTES___
 
 Wascer Meta CAPI, tag de Conversions API para container server.
 
-Estado: superficie de parametros definida, JS ainda nao implementado.
+Rodar os testes: node test/run.js, na raiz do repositorio. O harness em
+test/sandbox.js faz shim das APIs do sandbox para executar este arquivo fora
+do container.
+
+Pendente antes de publicar na galeria:
+  - preencher o bloco ___TESTS___, que e o que o proprio Tag Manager roda
+  - conferir a normalizacao de fn e ln com acento contra a doc da Meta
+  - rodar contra um dataset real com test_event_code
+  - permissoes de cookie e de header ja declaradas conforme o uso atual
+
 Plano e decisoes: docs/meta-capi-tag-propria.html no repo tags-variables-gtm.
-
-O bloco de permissoes cobre o que ja e certo. As permissoes de cookie
-(get_cookies, set_cookies) e de header (read_request) entram junto com o JS,
-para nao declarar acesso que a tag ainda nao usa.
-

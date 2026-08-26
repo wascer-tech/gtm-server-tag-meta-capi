@@ -7,10 +7,10 @@ hashes what Meta expects to be hashed, and posts it.
 Built by [Wascer](https://wascer.com) for the server containers we host, and free
 for anyone to use.
 
-> **Status: work in progress.** The fields below are final and importable, so
-> you can review the interface inside a container. The tag does not send a
-> request yet. Follow the plan in `docs/meta-capi-tag-propria.html` of the
-> `tags-variables-gtm` repository.
+> **Status: not published yet.** The tag builds and sends a real payload, and
+> the suite in `test/` covers it. What is still missing is a run against a live
+> dataset in Events Manager, and the `___TESTS___` block that Tag Manager runs
+> on its own.
 
 ## What the template does
 
@@ -57,6 +57,20 @@ tags does not change your numbers on its own:
 - **Trim spaces around the Event ID** starts off. Trimming on the server while
   the browser still sends the untrimmed string is what breaks a pair that used
   to deduplicate fine.
+
+## Running the tests
+
+The template is sandboxed JavaScript, so it only runs inside Tag Manager. The
+suite in `test/` gets around that with a small shim of the sandbox APIs, which
+means the payload can be checked on a laptop before any container is touched.
+
+```sh
+node test/run.js           # 50 checks, no network
+node test/run.js --print   # also prints the payload of each scenario
+```
+
+No dependencies, no install. The suite reads `template.tpl` itself, so what it
+checks is the file that gets imported, not a copy.
 
 ## Requirements
 

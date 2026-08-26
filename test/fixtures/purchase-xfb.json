@@ -1,0 +1,16 @@
+{
+  "event_name": "purchase",
+  "event_time": 1756231200,
+  "page_location": "https://www.lojateste.com.br/checkout/obrigado",
+  "transaction_id": "PED-90210",
+  "currency": "BRL",
+  "value": 249.9,
+  "event_id": "PED-90210",
+  "x-fb-cd-content_ids": ["SKU-1", "SKU-2"],
+  "x-fb-cd-content_type": "product",
+  "x-fb-cd-num_items": 3,
+  "x-fb-ck-fbp": "fb.1.1700000000000.1234567890",
+  "x-fb-ck-fbc": "fb.1.1700000000000.IwAR_legado",
+  "x-fb-ud-external_id": "3d8a5f2e9c1b4a7d6e0f3c2b1a9d8e7f6c5b4a3d2e1f0a9b8c7d6e5f4a3b2c1d",
+  "x-fb-ud-ge": "m"
+}
