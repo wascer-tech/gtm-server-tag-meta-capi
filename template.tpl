@@ -297,11 +297,14 @@ ___TEMPLATE_PARAMETERS___
         "help": "Picks up email, phone, name, address and external ID from the event, plus the _fbc and _fbp cookies."
       },
       {
-        "type": "TEXT",
+        "type": "SELECT",
         "name": "userDataObject",
-        "displayName": "User data object",
+        "displayName": "User Data Properties Object",
+        "macrosInSelect": true,
+        "selectItems": [],
         "simpleValueType": true,
-        "help": "A variable holding an object with the user data fields. Use it when your data does not sit where the automatic mapping looks."
+        "notSetText": "(not set)",
+        "help": "A variable holding an object of user data properties, merged with the table below. Use it for a field the list does not offer."
       },
       {
         "type": "SIMPLE_TABLE",
@@ -309,11 +312,119 @@ ___TEMPLATE_PARAMETERS___
         "displayName": "User data",
         "simpleTableColumns": [
           {
-            "defaultValue": "",
-            "displayName": "Parameter",
+            "type": "SELECT",
             "name": "name",
-            "type": "TEXT",
-            "isUnique": true
+            "displayName": "Property Name",
+            "defaultValue": "em",
+            "isUnique": true,
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": "em",
+                "displayValue": "Email"
+              },
+              {
+                "value": "ph",
+                "displayValue": "Phone"
+              },
+              {
+                "value": "fn",
+                "displayValue": "First Name"
+              },
+              {
+                "value": "ln",
+                "displayValue": "Last Name"
+              },
+              {
+                "value": "db",
+                "displayValue": "Date of Birth"
+              },
+              {
+                "value": "ge",
+                "displayValue": "Gender"
+              },
+              {
+                "value": "ct",
+                "displayValue": "City"
+              },
+              {
+                "value": "st",
+                "displayValue": "State"
+              },
+              {
+                "value": "zp",
+                "displayValue": "Zip"
+              },
+              {
+                "value": "country",
+                "displayValue": "Country"
+              },
+              {
+                "value": "external_id",
+                "displayValue": "External ID"
+              },
+              {
+                "value": "client_ip_address",
+                "displayValue": "Client IP Address"
+              },
+              {
+                "value": "client_user_agent",
+                "displayValue": "Client User Agent"
+              },
+              {
+                "value": "fbc",
+                "displayValue": "Click ID (fbc)"
+              },
+              {
+                "value": "fbp",
+                "displayValue": "Browser ID (fbp)"
+              },
+              {
+                "value": "subscription_id",
+                "displayValue": "Subscription ID"
+              },
+              {
+                "value": "fb_login_id",
+                "displayValue": "Facebook Login ID"
+              },
+              {
+                "value": "lead_id",
+                "displayValue": "Lead ID"
+              },
+              {
+                "value": "anon_id",
+                "displayValue": "Anonymous ID"
+              },
+              {
+                "value": "madid",
+                "displayValue": "Mobile Advertiser ID"
+              },
+              {
+                "value": "page_id",
+                "displayValue": "Page ID"
+              },
+              {
+                "value": "page_scoped_user_id",
+                "displayValue": "Page Scoped User ID"
+              },
+              {
+                "value": "ctwa_clid",
+                "displayValue": "Click to WhatsApp Click ID"
+              },
+              {
+                "value": "ig_account_id",
+                "displayValue": "Instagram Account ID"
+              },
+              {
+                "value": "ig_sid",
+                "displayValue": "Instagram Scoped ID"
+              }
+            ],
+            "valueValidators": [
+              {
+                "type": "NON_EMPTY"
+              }
+            ]
           },
           {
             "defaultValue": "",
@@ -323,7 +434,7 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "newRowButtonText": "Add parameter",
-        "help": "Parameter names as Meta writes them: em, ph, fn, ln, db, ge, ct, st, zp, country, external_id, fbc, fbp, client_ip_address, client_user_agent, lead_id. Anything here wins over the automatic mapping."
+        "help": "Anything here wins over the automatic mapping. Values that need hashing are hashed, and values that already arrive hashed are passed through."
       },
       {
         "type": "CHECKBOX",
@@ -350,26 +461,11 @@ ___TEMPLATE_PARAMETERS___
         "help": "Turns items into contents and content_ids, and carries value, currency, num_items and order_id across."
       },
       {
-        "type": "SELECT",
-        "name": "mapItemIdFrom",
-        "displayName": "Build content IDs from",
-        "selectItems": [
-          {
-            "value": "item_id",
-            "displayValue": "item_id"
-          },
-          {
-            "value": "item_variant",
-            "displayValue": "item_variant"
-          },
-          {
-            "value": "item_sku",
-            "displayValue": "item_sku"
-          }
-        ],
+        "type": "TEXT",
+        "name": "itemIdKey",
+        "displayName": "Custom Item ID Key",
         "simpleValueType": true,
-        "macrosInSelect": true,
-        "defaultValue": "item_id",
+        "canBeEmptyString": true,
         "enablingConditions": [
           {
             "paramName": "autoMapCustomData",
@@ -377,7 +473,8 @@ ___TEMPLATE_PARAMETERS___
             "type": "EQUALS"
           }
         ],
-        "help": "Has to match the ID scheme in your Meta catalog, or nothing lines up."
+        "valueHint": "item_id",
+        "help": "Optional. Leave it empty and the tag reads item_id, then id. Set a key when your platform names it differently, and it has to match the ID scheme in your Meta catalog."
       },
       {
         "type": "CHECKBOX",
@@ -395,11 +492,14 @@ ___TEMPLATE_PARAMETERS___
         "help": "Reads delivery_category from each item and sends in_store, curbside or home_delivery. Useful when pickup and delivery perform differently."
       },
       {
-        "type": "TEXT",
+        "type": "SELECT",
         "name": "customDataObject",
-        "displayName": "Custom data object",
+        "displayName": "Custom Data Properties Object",
+        "macrosInSelect": true,
+        "selectItems": [],
         "simpleValueType": true,
-        "help": "A variable holding an object with custom data fields."
+        "notSetText": "(not set)",
+        "help": "A variable holding an object of custom data properties, merged with the table below. Use it for a field the list does not offer."
       },
       {
         "type": "SIMPLE_TABLE",
@@ -407,11 +507,75 @@ ___TEMPLATE_PARAMETERS___
         "displayName": "Custom data",
         "simpleTableColumns": [
           {
-            "defaultValue": "",
-            "displayName": "Parameter",
+            "type": "SELECT",
             "name": "name",
-            "type": "TEXT",
-            "isUnique": true
+            "displayName": "Property Name",
+            "defaultValue": "value",
+            "isUnique": true,
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": "value",
+                "displayValue": "Value"
+              },
+              {
+                "value": "currency",
+                "displayValue": "Currency"
+              },
+              {
+                "value": "order_id",
+                "displayValue": "Order ID"
+              },
+              {
+                "value": "content_name",
+                "displayValue": "Content Name"
+              },
+              {
+                "value": "content_category",
+                "displayValue": "Content Category"
+              },
+              {
+                "value": "content_ids",
+                "displayValue": "Content IDs"
+              },
+              {
+                "value": "content_type",
+                "displayValue": "Content Type"
+              },
+              {
+                "value": "contents",
+                "displayValue": "Contents"
+              },
+              {
+                "value": "num_items",
+                "displayValue": "Number of Items"
+              },
+              {
+                "value": "search_string",
+                "displayValue": "Search String"
+              },
+              {
+                "value": "status",
+                "displayValue": "Status"
+              },
+              {
+                "value": "predicted_ltv",
+                "displayValue": "Predicted LTV"
+              },
+              {
+                "value": "net_revenue",
+                "displayValue": "Net Revenue"
+              },
+              {
+                "value": "delivery_category",
+                "displayValue": "Delivery Category"
+              }
+            ],
+            "valueValidators": [
+              {
+                "type": "NON_EMPTY"
+              }
+            ]
           },
           {
             "defaultValue": "",
@@ -421,7 +585,7 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "newRowButtonText": "Add parameter",
-        "help": "Parameter names as Meta writes them: value, currency, order_id, content_name, content_category, content_ids, content_type, contents, num_items, search_string, status, predicted_ltv, net_revenue. Anything here wins over the automatic mapping."
+        "help": "Anything here wins over the automatic mapping."
       }
     ]
   },
@@ -1186,7 +1350,8 @@ function readAutoCustomData() {
     let totalItems = 0;
 
     items.forEach((item) => {
-      const id = makeString(item[data.mapItemIdFrom] || item.item_id || item.id || '');
+      const custom = data.itemIdKey ? item[data.itemIdKey] : '';
+      const id = makeString(custom || item.item_id || item.id || '');
       if (!id) return;
       const quantity = item.quantity ? makeNumber(item.quantity) : 1;
       const entry = { id: id, quantity: quantity };

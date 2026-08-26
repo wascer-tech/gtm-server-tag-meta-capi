@@ -30,7 +30,7 @@ const baseData = {
   enableEventEnhancement: false,
   autoMapUserData: true,
   autoMapCustomData: true,
-  mapItemIdFrom: 'item_id',
+
   acceptFbPrefixes: true,
   readFbCookies: true,
   buildFbcFromUrl: true,
@@ -207,6 +207,26 @@ async function main() {
   r = await run({ eventType: 'custom', customEventName: 'MeuEvento' },
     { eventData: fixture('purchase-ga4.json') });
   check('custom digitado', r.captured.requests[0].body.data[0].event_name, 'MeuEvento');
+
+  // ---- 11b. Chave de ID do item -----------------------------------------
+  const skuProprio = { event_name: 'purchase', items: [
+    { sku_loja: 'ABC-9', item_id: 'IGNORAR', quantity: 1, price: 10 }] };
+  r = await run({ itemIdKey: 'sku_loja' }, { eventData: skuProprio });
+  check('chave livre vence o item_id',
+    r.captured.requests[0].body.data[0].custom_data.content_ids, ['ABC-9']);
+
+  r = await run({ itemIdKey: '' }, { eventData: skuProprio });
+  check('chave vazia cai no item_id',
+    r.captured.requests[0].body.data[0].custom_data.content_ids, ['IGNORAR']);
+
+  r = await run({}, { eventData: { event_name: 'purchase', items: [
+    { id: 'SO-ID', quantity: 1 }] } });
+  check('sem item_id, cai no id',
+    r.captured.requests[0].body.data[0].custom_data.content_ids, ['SO-ID']);
+
+  r = await run({ itemIdKey: 'nao_existe' }, { eventData: skuProprio });
+  check('chave inexistente cai na cadeia, nao derruba o item',
+    r.captured.requests[0].body.data[0].custom_data.content_ids, ['IGNORAR']);
 
   // ---- 12. Event Enhancement, o cookie _gtmeec ---------------------------
   const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf8').toString('base64');
