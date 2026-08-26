@@ -150,131 +150,141 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "SELECT",
         "name": "eventNameSource",
-        "displayName": "Event name",
+        "displayName": "Event Name Setup Method",
         "selectItems": [
           {
             "value": "automatic",
             "displayValue": "Map from the incoming event"
           },
           {
-            "value": "standard",
-            "displayValue": "Pick a standard event"
-          },
-          {
-            "value": "custom",
-            "displayValue": "Type a custom event name"
+            "value": "override",
+            "displayValue": "Set it here"
           }
         ],
         "simpleValueType": true,
         "macrosInSelect": true,
         "defaultValue": "automatic",
-        "help": "Automatic turns GA4 ecommerce names into Meta standard names. purchase becomes Purchase, view_item becomes ViewContent, and so on. Anything it does not recognize is passed through unchanged."
-      },
-      {
-        "type": "SELECT",
-        "name": "standardEventName",
-        "displayName": "Standard event",
-        "selectItems": [
+        "help": "Mapping turns GA4 ecommerce names into Meta standard names. purchase becomes Purchase, view_item becomes ViewContent, and so on. Anything it does not recognize is passed through unchanged.",
+        "subParams": [
           {
-            "value": "AddPaymentInfo",
-            "displayValue": "AddPaymentInfo"
-          },
-          {
-            "value": "AddToCart",
-            "displayValue": "AddToCart"
-          },
-          {
-            "value": "AddToWishlist",
-            "displayValue": "AddToWishlist"
-          },
-          {
-            "value": "CompleteRegistration",
-            "displayValue": "CompleteRegistration"
-          },
-          {
-            "value": "Contact",
-            "displayValue": "Contact"
-          },
-          {
-            "value": "CustomizeProduct",
-            "displayValue": "CustomizeProduct"
-          },
-          {
-            "value": "Donate",
-            "displayValue": "Donate"
-          },
-          {
-            "value": "FindLocation",
-            "displayValue": "FindLocation"
-          },
-          {
-            "value": "InitiateCheckout",
-            "displayValue": "InitiateCheckout"
-          },
-          {
-            "value": "Lead",
-            "displayValue": "Lead"
-          },
-          {
-            "value": "PageView",
-            "displayValue": "PageView"
-          },
-          {
-            "value": "Purchase",
-            "displayValue": "Purchase"
-          },
-          {
-            "value": "Schedule",
-            "displayValue": "Schedule"
-          },
-          {
-            "value": "Search",
-            "displayValue": "Search"
-          },
-          {
-            "value": "StartTrial",
-            "displayValue": "StartTrial"
-          },
-          {
-            "value": "SubmitApplication",
-            "displayValue": "SubmitApplication"
-          },
-          {
-            "value": "Subscribe",
-            "displayValue": "Subscribe"
-          },
-          {
-            "value": "ViewContent",
-            "displayValue": "ViewContent"
-          }
-        ],
-        "simpleValueType": true,
-        "macrosInSelect": true,
-        "defaultValue": "Purchase",
-        "enablingConditions": [
-          {
-            "paramName": "eventNameSource",
-            "paramValue": "standard",
-            "type": "EQUALS"
-          }
-        ]
-      },
-      {
-        "type": "TEXT",
-        "name": "customEventName",
-        "displayName": "Custom event name",
-        "simpleValueType": true,
-        "valueValidators": [
-          {
-            "type": "NON_EMPTY"
-          }
-        ],
-        "valueHint": "SubscribeNewsletter",
-        "enablingConditions": [
-          {
-            "paramName": "eventNameSource",
-            "paramValue": "custom",
-            "type": "EQUALS"
+            "type": "RADIO",
+            "name": "eventType",
+            "displayName": "Event Type",
+            "simpleValueType": true,
+            "defaultValue": "standard",
+            "enablingConditions": [
+              {
+                "paramName": "eventNameSource",
+                "paramValue": "override",
+                "type": "EQUALS"
+              }
+            ],
+            "radioItems": [
+              {
+                "value": "standard",
+                "displayValue": "Standard",
+                "subParams": [
+                  {
+                    "type": "SELECT",
+                    "name": "standardEventName",
+                    "macrosInSelect": true,
+                    "simpleValueType": true,
+                    "defaultValue": "Purchase",
+                    "selectItems": [
+                      {
+                        "value": "AddPaymentInfo",
+                        "displayValue": "AddPaymentInfo"
+                      },
+                      {
+                        "value": "AddToCart",
+                        "displayValue": "AddToCart"
+                      },
+                      {
+                        "value": "AddToWishlist",
+                        "displayValue": "AddToWishlist"
+                      },
+                      {
+                        "value": "CompleteRegistration",
+                        "displayValue": "CompleteRegistration"
+                      },
+                      {
+                        "value": "Contact",
+                        "displayValue": "Contact"
+                      },
+                      {
+                        "value": "CustomizeProduct",
+                        "displayValue": "CustomizeProduct"
+                      },
+                      {
+                        "value": "Donate",
+                        "displayValue": "Donate"
+                      },
+                      {
+                        "value": "FindLocation",
+                        "displayValue": "FindLocation"
+                      },
+                      {
+                        "value": "InitiateCheckout",
+                        "displayValue": "InitiateCheckout"
+                      },
+                      {
+                        "value": "Lead",
+                        "displayValue": "Lead"
+                      },
+                      {
+                        "value": "PageView",
+                        "displayValue": "PageView"
+                      },
+                      {
+                        "value": "Purchase",
+                        "displayValue": "Purchase"
+                      },
+                      {
+                        "value": "Schedule",
+                        "displayValue": "Schedule"
+                      },
+                      {
+                        "value": "Search",
+                        "displayValue": "Search"
+                      },
+                      {
+                        "value": "StartTrial",
+                        "displayValue": "StartTrial"
+                      },
+                      {
+                        "value": "SubmitApplication",
+                        "displayValue": "SubmitApplication"
+                      },
+                      {
+                        "value": "Subscribe",
+                        "displayValue": "Subscribe"
+                      },
+                      {
+                        "value": "ViewContent",
+                        "displayValue": "ViewContent"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "value": "custom",
+                "displayValue": "Custom",
+                "subParams": [
+                  {
+                    "type": "TEXT",
+                    "name": "customEventName",
+                    "simpleValueType": true,
+                    "valueHint": "SubscribeNewsletter",
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -342,6 +352,14 @@ ___TEMPLATE_PARAMETERS___
         ],
         "newRowButtonText": "Add parameter",
         "help": "Parameter names as Meta writes them: em, ph, fn, ln, db, ge, ct, st, zp, country, external_id, fbc, fbp, client_ip_address, client_user_agent, lead_id. Anything here wins over the automatic mapping."
+      },
+      {
+        "type": "CHECKBOX",
+        "name": "enableEventEnhancement",
+        "checkboxText": "Remember user data between events",
+        "simpleValueType": true,
+        "defaultValue": true,
+        "help": "Keeps the hashed identifiers in a first party cookie named _gtmeec, and reuses them on later events that carry no user data. A page view after checkout still gets matched. Same cookie that Meta's own template and the Stape tag read and write, so turning it on does not fight what is already there."
       }
     ]
   },
@@ -742,6 +760,8 @@ ___SANDBOXED_JS_FOR_SERVER___
 const computeEffectiveTldPlusOne = require('computeEffectiveTldPlusOne');
 const createRegex = require('createRegex');
 const decodeUriComponent = require('decodeUriComponent');
+const fromBase64 = require('fromBase64');
+const toBase64 = require('toBase64');
 const generateRandom = require('generateRandom');
 const getAllEventData = require('getAllEventData');
 const getCookieValues = require('getCookieValues');
@@ -772,6 +792,11 @@ const HASHED_KEYS = ['em', 'ph', 'fn', 'ln', 'db', 'ge', 'ct', 'st', 'zp', 'coun
 const RAW_KEYS = ['client_ip_address', 'client_user_agent', 'fbc', 'fbp', 'subscription_id',
   'fb_login_id', 'lead_id', 'anon_id', 'madid', 'page_id', 'page_scoped_user_id',
   'ctwa_clid', 'ig_account_id', 'ig_sid'];
+
+// Campos que sobrevivem no cookie de enriquecimento. So identificador ja
+// hasheado entra aqui: nada em texto claro toca o cookie.
+const ENHANCEMENT_KEYS = ['em', 'ph', 'fn', 'ln', 'db', 'ge', 'ct', 'st', 'zp',
+  'country', 'external_id', 'fb_login_id'];
 
 const EVENT_MAP = {
   page_view: 'PageView',
@@ -973,8 +998,9 @@ function buildPayload(ids) {
 }
 
 function resolveEventName() {
-  if (data.eventNameSource === 'standard') return data.standardEventName;
-  if (data.eventNameSource === 'custom') return data.customEventName;
+  if (data.eventNameSource === 'override') {
+    return data.eventType === 'custom' ? data.customEventName : data.standardEventName;
+  }
 
   const incoming = makeString(eventData.event_name || '');
   if (incoming === 'view_item_list') {
@@ -1022,7 +1048,54 @@ function buildUserData(ids) {
   const ua = eventData.user_agent || getRequestHeader('user-agent');
   if (ua && !out.client_user_agent) out.client_user_agent = makeString(ua);
 
-  return finalizeUserData(out);
+  const finalized = finalizeUserData(out);
+
+  if (data.enableEventEnhancement) {
+    const enhanced = fillFromEnhancementCookie(finalized);
+    writeEnhancementCookie(enhanced);
+    return enhanced;
+  }
+  return finalized;
+}
+
+// O usuario se identifica uma vez, no checkout ou no login. Os eventos
+// seguintes nao carregam nada. Sem isso, page_view e view_item vao sem match.
+function fillFromEnhancementCookie(userData) {
+  const encoded = firstCookie('_gtmeec') ||
+    makeString((getType(eventData.common_cookie) === 'object' ? eventData.common_cookie : {})._gtmeec || '');
+  if (!encoded) return userData;
+
+  const json = fromBase64(encoded);
+  if (!json) return userData;
+
+  const stored = JSON.parse(json);
+  if (getType(stored) !== 'object') return userData;
+
+  ENHANCEMENT_KEYS.forEach((key) => {
+    if (!userData[key] && stored[key]) userData[key] = stored[key];
+  });
+  return userData;
+}
+
+function writeEnhancementCookie(userData) {
+  const stored = {};
+  let has = false;
+  ENHANCEMENT_KEYS.forEach((key) => {
+    if (userData[key] && getType(userData[key]) === 'string') {
+      stored[key] = userData[key];
+      has = true;
+    }
+  });
+  if (!has) return;
+
+  setCookie('_gtmeec', toBase64(JSON.stringify(stored)), {
+    domain: data.cookieDomainSource === 'custom' && data.cookieDomain ? data.cookieDomain : 'auto',
+    path: '/',
+    secure: true,
+    httpOnly: true,
+    'max-age': COOKIE_MAX_AGE,
+    sameSite: 'Strict'
+  }, false);
 }
 
 function readAutoUserData() {
@@ -1432,6 +1505,10 @@ ___SERVER_PERMISSIONS___
               {
                 "type": 1,
                 "string": "_fbp"
+              },
+              {
+                "type": 1,
+                "string": "_gtmeec"
               }
             ]
           }
@@ -1530,6 +1607,53 @@ ___SERVER_PERMISSIONS___
                   {
                     "type": 1,
                     "string": "_fbp"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "_gtmeec"
                   },
                   {
                     "type": 1,
@@ -1681,7 +1805,8 @@ Pendente antes de publicar na galeria:
   - preencher o bloco ___TESTS___, que e o que o proprio Tag Manager roda
   - conferir a normalizacao de fn e ln com acento contra a doc da Meta
   - Event Type cobre os 17 eventos padrao da Meta mais PageView, lista conferida
-    contra a referencia do Meta Pixel
+    contra a referencia do Meta Pixel. AppendValue fica de fora enquanto
+    original_event_data estiver fora de escopo, para nao oferecer opcao quebrada
   - rodar contra um dataset real com test_event_code
   - permissoes de cookie e de header ja declaradas conforme o uso atual
 

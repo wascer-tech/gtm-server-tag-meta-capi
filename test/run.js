@@ -26,6 +26,7 @@ const baseData = {
   accessToken: 'TOKEN_DE_TESTE',
   actionSource: 'website',
   eventNameSource: 'automatic',
+  enableEventEnhancement: false,
   autoMapUserData: true,
   autoMapCustomData: true,
   mapItemIdFrom: 'item_id',
@@ -200,7 +201,57 @@ async function main() {
   check('_fbp do event data', r.captured.requests[0].body.data[0].user_data.fbp,
     'fb.1.1700000000000.999');
 
-  // ---- 11. Falha da Meta derruba a tag -----------------------------------
+  // ---- 11. Event Type manual --------------------------------------------
+  r = await run({ eventNameSource: 'override', eventType: 'standard', standardEventName: 'Lead' },
+    { eventData: fixture('purchase-ga4.json') });
+  check('standard escolhido a mao vence o mapa',
+    r.captured.requests[0].body.data[0].event_name, 'Lead');
+  r = await run({ eventNameSource: 'override', eventType: 'custom', customEventName: 'MeuEvento' },
+    { eventData: fixture('purchase-ga4.json') });
+  check('evento customizado', r.captured.requests[0].body.data[0].event_name, 'MeuEvento');
+
+  // ---- 12. Event Enhancement, o cookie _gtmeec ---------------------------
+  const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf8').toString('base64');
+
+  // checkout grava o cookie com o que foi identificado
+  r = await run({ enableEventEnhancement: true }, { eventData: fixture('purchase-ga4.json') });
+  const escrito = r.captured.cookies.filter((c) => c.name === '_gtmeec')[0];
+  checkTrue('checkout grava o _gtmeec', !!escrito);
+  const guardado = JSON.parse(Buffer.from(escrito.value, 'base64').toString('utf8'));
+  check('cookie guarda o email hasheado', guardado.em, sha('joao@example.com'));
+  check('cookie nao guarda nada em texto claro',
+    Object.keys(guardado).filter((k) => !/^[a-f0-9]{64}$/.test(guardado[k])), []);
+  check('cookie e httpOnly e Strict',
+    [escrito.options.httpOnly, escrito.options.sameSite], [true, 'Strict']);
+
+  // page_view depois, sem nenhum dado de usuario
+  const pageView = { event_name: 'page_view', page_location: 'https://www.loja.com/produto' };
+  r = await run({ enableEventEnhancement: true }, { eventData: pageView });
+  check('page_view sem enhancement nao teria email',
+    r.captured.requests[0].body.data[0].user_data.em, undefined);
+
+  r = await run({ enableEventEnhancement: true }, { eventData: pageView,
+    cookies: { _gtmeec: b64({ em: sha('joao@example.com'), ph: sha('5511987654321') }) } });
+  ev = r.captured.requests[0].body.data[0];
+  check('page_view herda o email do cookie', ev.user_data.em, sha('joao@example.com'));
+  check('page_view herda o telefone', ev.user_data.ph, sha('5511987654321'));
+
+  // dado do evento vence o cookie
+  r = await run({ enableEventEnhancement: true },
+    { eventData: Object.assign({}, pageView, { user_data: { email_address: 'outro@example.com' } }),
+      cookies: { _gtmeec: b64({ em: sha('joao@example.com') }) } });
+  check('email do evento vence o do cookie',
+    r.captured.requests[0].body.data[0].user_data.em, sha('outro@example.com'));
+
+  // desligado, nao le nem escreve
+  r = await run({ enableEventEnhancement: false }, { eventData: pageView,
+    cookies: { _gtmeec: b64({ em: sha('joao@example.com') }) } });
+  check('desligado ignora o cookie',
+    r.captured.requests[0].body.data[0].user_data.em, undefined);
+  check('desligado nao grava',
+    r.captured.cookies.filter((c) => c.name === '_gtmeec').length, 0);
+
+  // ---- 13. Falha da Meta derruba a tag -----------------------------------
   r = await run({}, { eventData: fixture('purchase-ga4.json'),
     live: () => Promise.resolve({ statusCode: 400, headers: {}, body: '{"error":{"message":"Invalid parameter"}}' }) });
   check('resposta 400 marca falha', r.failure, true);

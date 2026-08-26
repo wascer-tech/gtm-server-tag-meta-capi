@@ -19,7 +19,8 @@ for anyone to use.
 3. Hashes email, phone, name and address, and leaves already hashed values alone.
 4. Reads `_fbc` and `_fbp`, and rebuilds the click ID from `fbclid` when the cookie is gone.
 5. Carries the Event ID through, so the browser pixel and this tag are not counted twice.
-6. Sends the same event to more than one dataset when you need two ad accounts.
+6. Remembers the hashed identifiers in `_gtmeec`, so a page view after checkout still gets matched.
+7. Sends the same event to more than one dataset when you need two ad accounts.
 
 ## Installation
 
@@ -35,7 +36,7 @@ for anyone to use.
 |---|---|
 | Connection | Dataset ID and access token, one or several, plus Action Source and Test Event Code. |
 | Event | How the event name is worked out, and the Event ID used for deduplication. |
-| User Data | What Meta matches the event against. Automatic mapping, an object, or a table. |
+| User Data | What Meta matches the event against. Automatic mapping, an object, or a table, plus remembering identifiers between events. |
 | Custom Data | Value, currency, order and products. Automatic mapping, an object, or a table. |
 | Customer Segmentation | Whether this person is new to the business or already a customer. |
 | Cookies | Reading and writing `_fbc` and `_fbp`, and the cookie domain. |
@@ -57,6 +58,10 @@ tags does not change your numbers on its own:
 - **Trim spaces around the Event ID** starts off. Trimming on the server while
   the browser still sends the untrimmed string is what breaks a pair that used
   to deduplicate fine.
+- **Remember user data between events** starts on, and reads and writes the same
+  `_gtmeec` cookie that Meta's own template and the Stape tag use. A container
+  that already had event enhancement keeps it, with the stored identifiers
+  intact.
 
 ## Running the tests
 
@@ -65,7 +70,7 @@ suite in `test/` gets around that with a small shim of the sandbox APIs, which
 means the payload can be checked on a laptop before any container is touched.
 
 ```sh
-node test/run.js           # 50 checks, no network
+node test/run.js           # 68 checks, no network
 node test/run.js --print   # also prints the payload of each scenario
 ```
 

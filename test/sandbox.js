@@ -52,6 +52,8 @@ function createSandbox(env) {
     createRegex: (pattern, flags) => new RegExp(pattern, flags),
     decodeUriComponent: (v) => { try { return decodeURIComponent(v); } catch (e) { return v; } },
     encodeUriComponent: (v) => encodeURIComponent(v),
+    toBase64: (v) => Buffer.from(v, 'utf8').toString('base64'),
+    fromBase64: (v) => { try { return Buffer.from(v, 'base64').toString('utf8'); } catch (e) { return ''; } },
     testRegex: (re, str) => {
       const fresh = new RegExp(re.source, re.flags.replace('g', ''));
       return fresh.test(makeString(str));
