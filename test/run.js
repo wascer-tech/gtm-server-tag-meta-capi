@@ -72,7 +72,7 @@ async function main() {
   check('email normalizado e hasheado', ev.user_data.em, sha('joao@example.com'));
   check('telefone so digitos com DDI', ev.user_data.ph, sha('5511987654321'));
   check('nome minusculo', ev.user_data.fn, sha('joão'));
-  check('cidade sem espaco e sem acento fora', ev.user_data.ct, sha('sopaulo'));
+  check('cidade sem espaco, com o acento inteiro', ev.user_data.ct, sha('sãopaulo'));
   check('estado', ev.user_data.st, sha('sp'));
   check('cep sem hifen', ev.user_data.zp, sha('01310100'));
   check('pais em duas letras', ev.user_data.country, sha('br'));
@@ -101,6 +101,45 @@ async function main() {
   checkTrue('url da graph api', r.captured.requests[0].url.indexOf(
     'https://graph.facebook.com/v26.0/111122223333444/events?access_token=') === 0);
   check('tag reportou sucesso', r.success, true);
+
+  // ---- 1b. Normalizacao por campo, o que sai e o que fica ----------------
+  // A doc da Meta manda tirar pontuacao de fn e ln, e tirar pontuacao, espaco
+  // e digito de ct e st. Ela nao manda destruir letra acentuada: "If using
+  // special characters, the text must be encoded in UTF-8 format". Um
+  // [^a-z0-9] come o proprio caractere e transforma sao paulo em sopaulo, que
+  // nao casa com nada nem com ninguem.
+  const comUsuario = (userData) => ({ event_name: 'purchase', user_data: userData });
+
+  r = await run({}, { eventData: comUsuario({ address: { city: 'Ribeirão Preto - SP' } }) });
+  check('cidade perde espaco, hifen e nada mais',
+    r.captured.requests[0].body.data[0].user_data.ct, sha('ribeirãopretosp'));
+
+  r = await run({}, { eventData: comUsuario({ address: { region: 'Ceará' } }) });
+  check('estado com acento sobrevive',
+    r.captured.requests[0].body.data[0].user_data.st, sha('ceará'));
+
+  r = await run({}, { eventData: comUsuario({ first_name: "O'Brien" }) });
+  check('apostrofo sai do nome',
+    r.captured.requests[0].body.data[0].user_data.fn, sha('obrien'));
+
+  r = await run({}, { eventData: comUsuario({ first_name: 'Ana-Maria' }) });
+  check('hifen sai do nome',
+    r.captured.requests[0].body.data[0].user_data.fn, sha('anamaria'));
+
+  r = await run({}, { eventData: comUsuario({ first_name: 'Maria Clara' }) });
+  check('espaco fica no nome, que nao e cidade',
+    r.captured.requests[0].body.data[0].user_data.fn, sha('maria clara'));
+
+  r = await run({}, { eventData: comUsuario({ last_name: "D'Ávila" }) });
+  check('acento fica no sobrenome',
+    r.captured.requests[0].body.data[0].user_data.ln, sha('dávila'));
+
+  r = await run({}, { eventData: comUsuario({ address: { postal_code: '01310-100' } }) });
+  check('cep sem hifen', r.captured.requests[0].body.data[0].user_data.zp, sha('01310100'));
+
+  r = await run({}, { eventData: comUsuario({ phone_number: '+55 (11) 98765-4321' }) });
+  check('telefone so digito',
+    r.captured.requests[0].body.data[0].user_data.ph, sha('5511987654321'));
 
   // ---- 2. delivery_category ligado --------------------------------------
   r = await run({ mapDeliveryCategory: true }, { eventData: fixture('purchase-ga4.json') });

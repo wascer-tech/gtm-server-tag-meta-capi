@@ -1295,16 +1295,23 @@ function isAlreadyHashed(value) {
   return testRegex(createRegex('^[a-f0-9]{64}$', 'i'), value);
 }
 
+// A doc da Meta manda tirar pontuacao de fn e ln, e tirar pontuacao, espaco e
+// digito de ct e st. O que ela nao manda e destruir letra acentuada: "If using
+// special characters, the text must be encoded in UTF-8 format". Por isso o
+// que sai daqui e uma lista do que se remove, e nao uma lista do que fica: um
+// [^a-z0-9] come o proprio "a" com til e transforma sao paulo em sopaulo, que
+// nao casa com nada do outro lado.
 function normalize(key, value) {
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return '';
 
   if (key === 'ph') return digitsOnly(trimmed);
   if (key === 'db') return digitsOnly(trimmed);
-  if (key === 'zp') return digitsOnly(trimmed).length > 0 ?
-    stripSeparators(trimmed) : stripSeparators(trimmed);
-  if (key === 'ct') return lettersAndDigits(trimmed);
-  if (key === 'st') return lettersAndDigits(trimmed);
+  if (key === 'zp') return stripSeparators(trimmed);
+  if (key === 'ct') return placeName(trimmed);
+  if (key === 'st') return placeName(trimmed);
+  if (key === 'fn') return stripPunctuation(trimmed);
+  if (key === 'ln') return stripPunctuation(trimmed);
   if (key === 'country') return trimmed.substring(0, 2);
   if (key === 'ge') {
     const first = trimmed.substring(0, 1);
@@ -1321,8 +1328,15 @@ function stripSeparators(value) {
   return value.replace(createRegex('[\\s-]', 'g'), '');
 }
 
-function lettersAndDigits(value) {
-  return value.replace(createRegex('[^a-z0-9]', 'g'), '');
+// Os quatro intervalos de pontuacao do ASCII, sem tocar em digito nem em
+// letra, acentuada ou nao.
+function stripPunctuation(value) {
+  return value.replace(createRegex('[!-/:-@\\[-`{-~]', 'g'), '');
+}
+
+// Cidade e estado vao sem pontuacao, sem espaco e sem digito.
+function placeName(value) {
+  return stripPunctuation(value).replace(createRegex('[\\s0-9]', 'g'), '');
 }
 
 function firstIp(value) {
@@ -1963,9 +1977,11 @@ scenarios:
     // First name: lowercased, and the accent stays.
     assertThat(user.fn)
       .isEqualTo('d147147c3dcbe0ac2756b42297dd7f013f8b2fa6178e209c3f74dc7d752243ef');
-    // City: no space and no accent.
+    // City: no space, and the accented letter survives whole. Removing the
+    // letter instead of the accent turns são paulo into sopaulo, which matches
+    // nobody.
     assertThat(user.ct)
-      .isEqualTo('4a287883aa51936209f313e4c62d9b38b41b7df896dfdff33b98dc1a86607668');
+      .isEqualTo('3eda1428ae1aece064071f8d40f08fe2bc59ffa66c171a163caf15122ec4d7f0');
     // Zip: no dash.
     assertThat(user.zp)
       .isEqualTo('9a4a139dfbfcd2fc89a3cb4302dad65a35abd8d29a56c09a962b69c5cf3bca40');
@@ -1976,6 +1992,26 @@ scenarios:
     // IP and user agent are sent as they are. Hashing them breaks the match.
     assertThat(user.client_ip_address).isEqualTo('187.1.2.3');
     assertThat(user.client_user_agent).isEqualTo('Mozilla/5.0 Teste');
+- name: Punctuation leaves the name, the accent stays
+  code: |-
+    let capturedBody;
+    mock('sendHttpRequest', (url, options, body) => {
+      capturedBody = JSON.parse(body);
+      return resolvedRequest({statusCode: 200, body: '{}'});
+    });
+
+    // "Lowercase only with no punctuation. If using special characters, the
+    // text must be encoded in UTF-8 format." So the apostrophe goes and the
+    // accent stays.
+    mockEvent({event_name: 'purchase', user_data: {first_name: "O'Brien"}});
+    runCode(mockData({}));
+    assertThat(capturedBody.data[0].user_data.fn)
+      .isEqualTo('b4cb6cb33fe4b865868de825023a1e2790dc12ac01ecc8d7c5afe8254071c8ba');
+
+    mockEvent({event_name: 'purchase', user_data: {address: {region: 'Ceará'}}});
+    runCode(mockData({}));
+    assertThat(capturedBody.data[0].user_data.st)
+      .isEqualTo('6d1097dd6aa9e39c56bdf33ba466685e7708a8b28978fece2982d70cd9f46b6d');
 - name: A value that already arrives hashed is passed through untouched
   code: |-
     const hashed = 'a72badd7bb3fa438d2cb290471dae4ae9c80da96351cc328787468946ade2a88';
@@ -2259,11 +2295,18 @@ test/sandbox.js faz shim das APIs do sandbox para executar este arquivo fora
 do container, e test/gtm-tests.js roda os cenarios do bloco ___TESTS___ acima,
 que e o que a revisao da galeria executa.
 
+Normalizacao por campo, conferida contra a doc da Meta:
+  - fn e ln: minuscula, sem pontuacao, acento preservado. A doc diz "Lowercase
+    only with no punctuation" e, sobre acento, "If using special characters,
+    the text must be encoded in UTF-8 format". Ou seja, tira pontuacao e nao
+    destroi a letra
+  - ct e st: o mesmo, e ainda sem espaco e sem digito
+  - a remocao e por lista do que sai. Um [^a-z0-9] comeria o proprio caractere
+    acentuado e transformaria sao paulo em sopaulo. A tag oficial da Meta manda
+    "sao paulo" com espaco e acento, e a da Stape manda "saopaulo" com acento e
+    sem espaco. Nenhuma das duas destroi a letra
+
 Pendente antes de publicar na galeria:
-  - conferir a normalizacao de fn e ln com acento contra a doc da Meta. Hoje
-    cidade vira sopaulo, sem acento, como o normalizer dos SDKs da Meta faz, e
-    nome vira joao com acento, como a doc de user data manda. As duas regras
-    estao em documentos diferentes e a frase que resolve nao apareceu
   - Event Type cobre os 17 eventos padrao da Meta mais PageView, lista conferida
     contra a referencia do Meta Pixel. AppendValue fica de fora enquanto
     original_event_data estiver fora de escopo, para nao oferecer opcao quebrada
