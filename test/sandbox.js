@@ -111,8 +111,16 @@ function createSandbox(env) {
 
   // O bloco ___TESTS___ troca uma API por outra com mock(). A troca entra por
   // cima do shim, do mesmo jeito.
+  // mock(nome, valor) do bloco ___TESTS___. Funcao entra como esta. Valor cru
+  // entra como esta quando a API e um objeto, tipo templateStorage, e vira
+  // funcao que devolve o valor quando a API e uma funcao, tipo getAllEventData.
   Object.keys(env.mocks || {}).forEach((name) => {
-    api[name] = env.mocks[name];
+    const replacement = env.mocks[name];
+    if (typeof replacement === 'function' || typeof api[name] !== 'function') {
+      api[name] = replacement;
+    } else {
+      api[name] = () => replacement;
+    }
   });
 
   return { api, captured };

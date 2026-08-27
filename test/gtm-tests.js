@@ -206,8 +206,10 @@ function runTagScenarios(source, tpl, env) {
       calls[name].push(args);
     };
 
+    // Guarda o valor cru. Quem decide se ele vira funcao e o sandbox, que sabe
+    // se a API original e funcao (getAllEventData) ou objeto (templateStorage).
     const mock = (name, replacement) => {
-      mocks[name] = typeof replacement === 'function' ? replacement : () => replacement;
+      mocks[name] = replacement;
     };
 
     const runCode = (data) => {
