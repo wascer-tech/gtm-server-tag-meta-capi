@@ -1567,7 +1567,7 @@ ___SERVER_PERMISSIONS___
     "clientAnnotations": {
       "isEditedByUser": true
     },
-    "isRequired": true
+    "isRequired": false
   },
   {
     "instance": {
@@ -1802,14 +1802,7 @@ ___SERVER_PERMISSIONS___
       },
       "param": [
         {
-          "key": "headerAccess",
-          "value": {
-            "type": 1,
-            "string": "specific"
-          }
-        },
-        {
-          "key": "headersAllowed",
+          "key": "headerWhitelist",
           "value": {
             "type": 2,
             "listItem": [
@@ -1877,6 +1870,20 @@ ___SERVER_PERMISSIONS___
           }
         },
         {
+          "key": "headersAllowed",
+          "value": {
+            "type": 8,
+            "boolean": true
+          }
+        },
+        {
+          "key": "headerAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
           "key": "queryParameterAccess",
           "value": {
             "type": 1,
@@ -1887,7 +1894,7 @@ ___SERVER_PERMISSIONS___
           "key": "requestAccess",
           "value": {
             "type": 1,
-            "string": "none"
+            "string": "specific"
           }
         }
       ]
