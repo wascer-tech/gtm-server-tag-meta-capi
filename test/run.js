@@ -7,7 +7,13 @@ const crypto = require('crypto');
 const { runTemplate } = require('./sandbox');
 
 const ROOT = path.join(__dirname, '..');
-const SOURCE = extractJs(fs.readFileSync(path.join(ROOT, 'template.tpl'), 'utf8'));
+const TEMPLATE = fs.readFileSync(path.join(ROOT, 'template.tpl'), 'utf8');
+const SOURCE = extractJs(TEMPLATE);
+const SERVER_PERMISSIONS = extractJsonSection(
+  TEMPLATE,
+  '___SERVER_PERMISSIONS___',
+  '___TESTS___'
+);
 const PRINT = process.argv.includes('--print');
 
 function extractJs(tpl) {
@@ -15,6 +21,13 @@ function extractJs(tpl) {
   const rest = tpl.slice(start + '___SANDBOXED_JS_FOR_SERVER___'.length);
   const end = rest.search(/^___[A-Z_]+___$/m);
   return rest.slice(0, end);
+}
+
+function extractJsonSection(tpl, marker, nextMarker) {
+  const start = tpl.indexOf(marker);
+  const rest = tpl.slice(start + marker.length);
+  const end = rest.indexOf(nextMarker);
+  return JSON.parse(rest.slice(0, end).trim());
 }
 
 const fixture = (name) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8'));
@@ -56,6 +69,26 @@ function run(data, env) {
 }
 
 async function main() {
+  // ---- 0. Permissoes usadas pelo runtime real do GTM ---------------------
+  const readRequest = SERVER_PERMISSIONS.find((permission) =>
+    permission.instance.key.publicId === 'read_request');
+  const readRequestParams = Object.fromEntries(
+    readRequest.instance.param.map((param) => [param.key, param.value]));
+  const headerWhitelist = (readRequestParams.headerWhitelist?.listItem || [])
+    .map((item) => item.mapValue[0].string)
+    .sort();
+  check('read_request libera os headers lidos pelo template', {
+    headerAccess: readRequestParams.headerAccess?.string,
+    headersAllowed: readRequestParams.headersAllowed?.boolean,
+    requestAccess: readRequestParams.requestAccess?.string,
+    headerWhitelist
+  }, {
+    headerAccess: 'specific',
+    headersAllowed: true,
+    requestAccess: 'specific',
+    headerWhitelist: ['referer', 'user-agent', 'x-forwarded-for', 'x-gtm-server-preview']
+  });
+
   // ---- 1. Purchase GA4 completo -----------------------------------------
   let r = await run({}, { eventData: fixture('purchase-ga4.json'), cookies: {},
     headers: { 'user-agent': 'Mozilla/5.0 Teste', 'x-forwarded-for': '187.1.2.3, 10.0.0.1' } });
