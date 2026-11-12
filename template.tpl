@@ -884,6 +884,13 @@ ___TEMPLATE_PARAMETERS___
         ],
         "simpleValueType": true,
         "defaultValue": "debug"
+      },
+      {
+        "type": "TEXT",
+        "name": "systemLogEventType",
+        "displayName": "Event type (System Log)",
+        "simpleValueType": true,
+        "help": "Custom System Log event type. Empty uses event_name. Collection is controlled by the container toggle."
       }
     ]
   }
@@ -899,6 +906,7 @@ const toBase64 = require('toBase64');
 const generateRandom = require('generateRandom');
 const getAllEventData = require('getAllEventData');
 const getCookieValues = require('getCookieValues');
+const getEventData = require('getEventData');
 const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
 const getType = require('getType');
@@ -1400,16 +1408,25 @@ function sendAll(event) {
     const body = { data: [event] };
     if (data.testEventCode) body.test_event_code = data.testEventCode;
 
+    const serialized = JSON.stringify(body);
+    const started = getTimestampMillis();
+
     return sendHttpRequest(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' }
-    }, JSON.stringify(body)).then((result) => {
+    }, serialized).then((result) => {
+      copySystemLog('meta', 'Meta CAPI', url, 'POST', serialized, result.statusCode, result.body, started);
+
       if (result.statusCode >= 200 && result.statusCode < 300) {
         log('Wascer Meta CAPI: dataset ' + target.datasetId + ' aceitou o evento.', result.body);
         return true;
       }
       log('Wascer Meta CAPI: dataset ' + target.datasetId + ' recusou.', result.statusCode, result.body);
       return false;
+    }, (error) => {
+      // Erro de rede: copia com status 0 e devolve a mesma rejeicao de antes.
+      copySystemLog('meta', 'Meta CAPI', url, 'POST', serialized, 0, error && (error.body || error.reason), started);
+      return Promise.create((resolve, reject) => reject(error));
     });
   });
 
@@ -1476,6 +1493,37 @@ function log(a, b, c) {
   else logToConsole(a);
 }
 
+// ------------------------------------------------------------- system log
+
+// O System Log e ligado pelo header do proxy, nunca por configuracao da tag.
+// Solto de proposito: nem a entrega nem a falha do coletor seguram a tag.
+function copySystemLog(platform, tagName, requestUrl, requestMethod, requestBody, responseStatus, responseBody, started) {
+  if (getRequestHeader('x-wascer-log') !== '1') return;
+  const elapsed = getTimestampMillis() - started;
+  const duration = elapsed < 0 ? 0 : elapsed > 4294967295 ? 4294967295 : elapsed;
+  Promise.create((resolve) => resolve()).then(() => {
+    const eventName = getEventData('event_name');
+    const envelope = {
+      trace_id: getRequestHeader('x-wascer-trace-id') || '',
+      platform: platform,
+      tag_name: tagName,
+      event_name: getType(eventName) === 'string' ? eventName : '',
+      event_type: data.systemLogEventType || (getType(eventName) === 'string' ? eventName : ''),
+      request_method: requestMethod,
+      request_url: requestUrl,
+      request_body: requestBody,
+      response_status: responseStatus || 0,
+      response_body: getType(responseBody) === 'string' ? responseBody : '',
+      duration_ms: duration
+    };
+    return sendHttpRequest('https://system-log.wascer.internal/log', {
+      method: 'POST',
+      timeout: 500,
+      headers: {'Content-Type': 'application/json'}
+    }, JSON.stringify(envelope));
+  }).then(() => {}, () => {});
+}
+
 
 ___SERVER_PERMISSIONS___
 
@@ -1523,6 +1571,10 @@ ___SERVER_PERMISSIONS___
               {
                 "type": 1,
                 "string": "https://graph.facebook.com/"
+              },
+              {
+                "type": 1,
+                "string": "https://system-log.wascer.internal/log"
               }
             ]
           }
@@ -1865,6 +1917,36 @@ ___SERVER_PERMISSIONS___
                     "string": "x-gtm-server-preview"
                   }
                 ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "x-wascer-log"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "x-wascer-trace-id"
+                  }
+                ]
               }
             ]
           }
@@ -1929,3 +2011,19 @@ Pendente antes de publicar na galeria:
   - permissoes de cookie e de header ja declaradas conforme o uso atual
 
 Plano e decisoes: docs/meta-capi-tag-propria.html no repo tags-variables-gtm.
+
+System Log (import manual do template; sem publicacao remota):
+So o header x-wascer-log: 1 liga a copia, best effort, feita quando a resposta
+da Graph API chega (ou o erro de rede), uma por dataset, tambem no modo
+"Answer before Meta confirms". A copia vai so para
+https://system-log.wascer.internal/log (loopback do pod, TLS confiavel na 443) e
+leva o x-wascer-trace-id como trace_id. platform = meta, tag_name = Meta CAPI.
+Event type (System Log) e texto livre; vazio usa o event_name.
+A URL do request (inclui o access_token do dataset na query string), o corpo
+enviado e o corpo da resposta sao as strings originais, sem mascara, projecao
+ou truncamento. Erro de rede usa status 0 e o body/reason do erro, quando ha.
+Nenhum header, credencial, busca de config, modo, fila ou retry foi adicionado.
+O logger e solto do termino da tag; entrega atrasada continua best effort.
+send_http continua em lista especifica: entrou so a URL exata do loopback, fixa
+em codigo, que nunca deriva de campo da tag. read_request ganhou x-wascer-log e
+x-wascer-trace-id. Testes: node --test (test/system-log.test.cjs).
