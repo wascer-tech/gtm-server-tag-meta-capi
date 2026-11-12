@@ -43,7 +43,7 @@ for anyone to use.
 | Compatibility | Also read the `x-fb-` prefixed parameters that Meta's own template expects. |
 | Consent | Whether ad storage consent gates the event, and Limited Data Use. |
 | More Settings | Graph API version and optimistic answer. |
-| Logs Settings | What the tag writes to the container console. |
+| Logs Settings | What the tag writes to the container console, and the **Event type (System Log)** label. See below. |
 
 ## Moving from another Conversions API tag
 
@@ -63,6 +63,36 @@ tags does not change your numbers on its own:
   that already had event enhancement keeps it, with the stored identifiers
   intact.
 
+## System Log
+
+When the server container has logging turned on, the tag also sends a copy of
+what it sent to Meta, and of the answer it got back, to the Wascer System Log.
+The copy holds the request URL, method and body, the response status and body,
+how long the request took, the event name and your **Event type (System Log)**
+label (the event name when the label is empty). With several datasets there is
+one copy per dataset.
+
+This only happens when logging is turned on for the container: the hosting proxy
+sets the `x-wascer-log: 1` request header (and `x-wascer-trace-id` to correlate
+the copy). Without that header the tag does nothing extra. Nothing is masked: the
+request URL, which carries the dataset access token, and the request and response
+bodies are copied exactly as they were sent and received. The copy is made when
+Meta answers, also with **Answer before Meta confirms** on. It is best effort
+and never changes the result of the tag.
+
+## Updating the template
+
+To bring a workspace that already has an older version of this template up to date:
+
+1. In your **server** container, open **Templates**, then **Tag Templates**,
+   and open the Wascer Meta CAPI template.
+2. Open the three dot menu and choose **Import**.
+3. Pick the new `template.tpl` from this repository and save the template.
+4. **Publish** the workspace (Submit, then Publish) so the live container picks
+   up the new version.
+
+Tags already created from the template keep the values you filled in.
+
 ## Running the tests
 
 The template is sandboxed JavaScript, so it only runs inside Tag Manager. The
@@ -72,6 +102,7 @@ means the payload can be checked on a laptop before any container is touched.
 ```sh
 node test/run.js           # 76 checks, no network
 node test/run.js --print   # also prints the payload of each scenario
+node --test                # the above plus the System Log tests
 ```
 
 No dependencies, no install. The suite reads `template.tpl` itself, so what it

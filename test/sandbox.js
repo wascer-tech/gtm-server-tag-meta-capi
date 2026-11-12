@@ -42,7 +42,7 @@ function parseUrl(url) {
 }
 
 // Constroi o ambiente para uma execucao. `env` traz eventData, cookies,
-// headers e o modo de envio.
+// headers e o modo de envio. `env.clock`, quando presente, e o relogio da execucao.
 function createSandbox(env) {
   const captured = { requests: [], cookies: [], logs: [], promises: [] };
   let clock = env.nowMillis || 1756231200000;
@@ -69,7 +69,7 @@ function createSandbox(env) {
       return [noDecode ? v : decodeURIComponent(v)];
     },
     getRequestHeader: (name) => (env.headers || {})[name.toLowerCase()],
-    getTimestampMillis: () => clock,
+    getTimestampMillis: () => (env.clock ? env.clock() : clock),
     getType,
     JSON: { parse: JSON.parse, stringify: JSON.stringify },
     logToConsole: (...args) => { captured.logs.push(args); if (env.verbose) console.log('   [log]', ...args); },

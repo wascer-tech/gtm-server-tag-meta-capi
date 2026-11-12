@@ -86,7 +86,8 @@ async function main() {
     headerAccess: 'specific',
     headersAllowed: true,
     requestAccess: 'specific',
-    headerWhitelist: ['referer', 'user-agent', 'x-forwarded-for', 'x-gtm-server-preview']
+    headerWhitelist: ['referer', 'user-agent', 'x-forwarded-for', 'x-gtm-server-preview',
+      'x-wascer-log', 'x-wascer-trace-id']
   });
 
   // ---- 1. Purchase GA4 completo -----------------------------------------
